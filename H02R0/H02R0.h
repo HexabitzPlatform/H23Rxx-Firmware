@@ -41,8 +41,8 @@
 #define P1uart &huart4
 #define P2uart &huart2
 #define P3uart &huart6
-#define P5uart &huart1
-#define P6uart &huart5
+#define P4uart &huart1
+#define P5uart &huart5
 	
 /* Port Definitions */
 #define	USART1_TX_PIN		GPIO_PIN_9
@@ -93,7 +93,8 @@ typedef enum
 {
   H02R0_OK = 0,
 	H02R0_ERR_UnknownMessage = 1,
-} H02R0_Status;
+	H02R0_ERROR = 255
+} Module_Status;
 
 /* Indicator LED */
 #define _IND_LED_PORT		GPIOA
@@ -131,8 +132,6 @@ extern void MX_USART6_UART_Init(void);
    ----------------------------------------------------------------------- 
 */
 
-extern void H02R0_Init(void);
-extern H02R0_Status H02R0_MessagingTask(uint16_t code, uint8_t port, uint8_t src, uint8_t dst);
 
 
 /* -----------------------------------------------------------------------

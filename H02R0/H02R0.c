@@ -43,35 +43,9 @@ UART_HandleTypeDef huart6;
    ----------------------------------------------------------------------- 
 */
 
-/* --- H02R0 message processing task. 
-*/
-H02R0_Status H02R0_MessagingTask(uint16_t code, uint8_t port, uint8_t src, uint8_t dst)
-{
-	H02R0_Status result = H02R0_OK;
-	
-	switch (code)
-	{
-
-		default:
-			result = H02R0_ERR_UnknownMessage;
-			break;
-	}			
-
-	return result;	
-}
-
-/*-----------------------------------------------------------*/
-
-
-
-/* -----------------------------------------------------------------------
-	|																APIs	 																 	|
-   ----------------------------------------------------------------------- 
-*/
-
 /* --- H02R0 module initialization. 
 */
-void H02R0_Init(void)
+void Module_Init(void)
 {	
 	/* Array ports */
   MX_USART1_UART_Init();
@@ -88,6 +62,50 @@ void H02R0_Init(void)
   
 }
 /*-----------------------------------------------------------*/
+
+/* --- H02R0 message processing task. 
+*/
+Module_Status Module_MessagingTask(uint16_t code, uint8_t port, uint8_t src, uint8_t dst)
+{
+	Module_Status result = H02R0_OK;
+	
+	switch (code)
+	{
+
+		default:
+			result = H02R0_ERR_UnknownMessage;
+			break;
+	}			
+
+	return result;	
+}
+
+/*-----------------------------------------------------------*/
+
+/* --- Get the port for a given UART. 
+*/
+uint8_t GetPort(UART_HandleTypeDef *huart)
+{
+	if (huart->Instance == USART4)
+			return P1;
+	else if (huart->Instance == USART2)
+			return P2;
+	else if (huart->Instance == USART6)
+			return P3;
+	else if (huart->Instance == USART1)
+			return P4;
+	else if (huart->Instance == USART5)
+			return P5;
+
+	return 0;
+}
+
+
+/* -----------------------------------------------------------------------
+	|																APIs	 																 	|
+   ----------------------------------------------------------------------- 
+*/
+
 
 
 /*-----------------------------------------------------------*/
