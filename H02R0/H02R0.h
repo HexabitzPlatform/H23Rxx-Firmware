@@ -13,6 +13,9 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "BOS.h"
+#include "H02R0_uart.h"	
+#include "H02R0_gpio.h"	
+#include "H02R0_dma.h"	
 
 /* Exported definitions -------------------------------------------------------*/
 
