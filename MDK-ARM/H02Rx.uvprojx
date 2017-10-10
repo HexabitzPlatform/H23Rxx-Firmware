@@ -469,6 +469,16 @@
               <FileType>1</FileType>
               <FilePath>..\thirdparty\STM32F0xx_HAL_Driver\Src\stm32f0xx_hal_uart_ex.c</FilePath>
             </File>
+            <File>
+              <FileName>stm32f0xx_hal_rtc.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Thirdparty\STM32F0xx_HAL_Driver\Src\stm32f0xx_hal_rtc.c</FilePath>
+            </File>
+            <File>
+              <FileName>stm32f0xx_hal_rtc_ex.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Thirdparty\STM32F0xx_HAL_Driver\Src\stm32f0xx_hal_rtc_ex.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -587,7 +597,7 @@
             <File>
               <FileName>startup_stm32f091xc.s</FileName>
               <FileType>2</FileType>
-              <FilePath>..\User\startup_stm32f091xc.s</FilePath>
+              <FilePath>..\H02R0\startup_stm32f091xc.s</FilePath>
             </File>
           </Files>
         </Group>
