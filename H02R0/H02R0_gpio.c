@@ -71,17 +71,58 @@ void IND_LED_Init(void)
 	HAL_GPIO_Init(_IND_LED_PORT, &GPIO_InitStruct);
 }
 
-/* --- Configure BT800 EN_RST GPIO --- 
+
+/* --- Configure BT800 EN_RST / BT900 RST GPO --- 
 */
-void BT_EN_RST_Init(void)
+void BT_RST_GPO_Init(void)
 {
 	GPIO_InitTypeDef GPIO_InitStruct;
 	
-	GPIO_InitStruct.Pin = _BT_EN_RST_PIN;
+	GPIO_InitStruct.Pin = _BT_RST_PIN;
 	GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
 	GPIO_InitStruct.Pull = GPIO_NOPULL;
 	GPIO_InitStruct.Speed = GPIO_SPEED_HIGH;
-	HAL_GPIO_Init(_BT_EN_RST_PORT, &GPIO_InitStruct);
+	HAL_GPIO_Init(_BT_RST_PORT, &GPIO_InitStruct);
 }
+
+#ifdef H02R1
+/* --- Configure BT900 VSP Command Mode GPO --- 
+*/
+void BT_VSP_GPO_Init(void)
+{
+	GPIO_InitTypeDef GPIO_InitStruct;
+	
+	GPIO_InitStruct.Pin = _BT_VSP_PIN;
+	GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+	GPIO_InitStruct.Pull = GPIO_NOPULL;
+	GPIO_InitStruct.Speed = GPIO_SPEED_HIGH;
+	HAL_GPIO_Init(_BT_VSP_PORT, &GPIO_InitStruct);
+}
+
+/* --- Configure BT900 Module Mode GPO --- 
+*/
+void BT_MODE_GPO_Init(void)
+{
+	GPIO_InitTypeDef GPIO_InitStruct;
+	
+	GPIO_InitStruct.Pin = _BT_MODE_PIN;
+	GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+	GPIO_InitStruct.Pull = GPIO_NOPULL;
+	GPIO_InitStruct.Speed = GPIO_SPEED_HIGH;
+	HAL_GPIO_Init(_BT_MODE_PORT, &GPIO_InitStruct);
+}
+
+/* --- Configure BT900 Host Wakeup GPI --- 
+*/
+void BT_HOST_WKUP_GPI_Init(void)
+{
+	GPIO_InitTypeDef GPIO_InitStruct;
+	
+	GPIO_InitStruct.Pin = _BT_HOST_WKUP_PIN;
+	GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+	GPIO_InitStruct.Pull = GPIO_NOPULL;
+	HAL_GPIO_Init(_BT_HOST_WKUP_PORT, &GPIO_InitStruct);
+}
+#endif
 
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

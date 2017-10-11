@@ -50,7 +50,13 @@
 
 extern void MX_GPIO_Init(void);
 extern void IND_LED_Init(void);
-extern void BT_EN_RST_Init(void);
+	 
+extern void BT_RST_GPO_Init(void);
+#ifdef H02R1	 
+extern void BT_VSP_GPO_Init(void);
+extern void BT_MODE_GPO_Init(void);
+extern void BT_HOST_WKUP_GPI_Init(void);
+#endif
 
 
 #ifdef __cplusplus

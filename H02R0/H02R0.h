@@ -19,7 +19,8 @@
 
 /* Exported definitions -------------------------------------------------------*/
 
-#define	modulePN		_H02R0
+//#define	modulePN		_H02R0
+#define	modulePN		_H02R1
 
 /* Port-related definitions */
 #define	NumOfPorts		5
@@ -88,8 +89,20 @@
 #define	USART3_RTS_PORT		GPIOB
 #define	USART3_CTS_PORT		GPIOA
 #define	USART3_AF					GPIO_AF4_USART3
-#define	_BT_EN_RST_PIN		GPIO_PIN_15
-#define	_BT_EN_RST_PORT		GPIOB
+#ifdef H02R0
+	#define	_BT_RST_PIN			GPIO_PIN_15
+	#define	_BT_RST_PORT		GPIOB
+#endif
+#ifdef H02R1
+	#define	_BT_RST_PIN							GPIO_PIN_2
+	#define	_BT_RST_PORT						GPIOB
+	#define	_BT_VSP_PIN							GPIO_PIN_14
+	#define	_BT_VSP_PORT						GPIOB
+	#define	_BT_MODE_PIN						GPIO_PIN_7
+	#define	_BT_MODE_PORT						GPIOA
+	#define	_BT_HOST_WKUP_PIN				GPIO_PIN_12
+	#define	_BT_HOST_WKUP_PORT			GPIOB
+#endif
 
 /* H02R0_Status Type Definition */  
 typedef enum 

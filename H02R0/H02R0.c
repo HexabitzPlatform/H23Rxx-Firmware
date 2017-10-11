@@ -58,7 +58,13 @@ void Module_Init(void)
   MX_USART3_UART_Init();
 	
 	/* BT800 EN_RST */
-	BT_EN_RST_Init();
+	BT_RST_GPO_Init();
+#ifdef H02R1	 
+	BT_VSP_GPO_Init();
+	BT_MODE_GPO_Init();
+	BT_HOST_WKUP_GPI_Init();
+#endif	
+	
   
 }
 /*-----------------------------------------------------------*/
