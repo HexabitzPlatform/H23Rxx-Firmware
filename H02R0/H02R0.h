@@ -4,7 +4,7 @@
 		
     File Name     : H02R0.h
     Description   : Header file for module H02R0.
-										Bluetooth module (BT800) 
+										Bluetooth module (BT800/BT900) 
 */
 	
 /* Define to prevent recursive inclusion -------------------------------------*/

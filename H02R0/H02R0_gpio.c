@@ -74,7 +74,7 @@ void IND_LED_Init(void)
 
 /* --- Configure BT800 EN_RST / BT900 RST GPO --- 
 */
-void BT_RST_GPO_Init(void)
+void BT_RST_GPIO_Init(void)
 {
 	GPIO_InitTypeDef GPIO_InitStruct;
 	
@@ -88,7 +88,7 @@ void BT_RST_GPO_Init(void)
 #ifdef H02R1
 /* --- Configure BT900 VSP Command Mode GPO --- 
 */
-void BT_VSP_GPO_Init(void)
+void BT_VSP_GPIO_Init(void)
 {
 	GPIO_InitTypeDef GPIO_InitStruct;
 	
@@ -101,7 +101,7 @@ void BT_VSP_GPO_Init(void)
 
 /* --- Configure BT900 Module Mode GPO --- 
 */
-void BT_MODE_GPO_Init(void)
+void BT_MODE_GPIO_Init(void)
 {
 	GPIO_InitTypeDef GPIO_InitStruct;
 	
@@ -114,7 +114,7 @@ void BT_MODE_GPO_Init(void)
 
 /* --- Configure BT900 Host Wakeup GPI --- 
 */
-void BT_HOST_WKUP_GPI_Init(void)
+void BT_HOST_WKUP_GPIO_Init(void)
 {
 	GPIO_InitTypeDef GPIO_InitStruct;
 	

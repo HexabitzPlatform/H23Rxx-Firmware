@@ -4,13 +4,17 @@
 
     File Name     : H02R0.c
     Description   : Source code for module H02R0.
-										Bluetooth module (BT800) 
+										Bluetooth module (BT800/BT900) 
 		
 		Required MCU resources : 
 		
 			>> USARTs 1,2,4,5,6 for module ports.
-			>> USART 3 for FT234XD connected to BT800 USB.
-			>> PB15 for BT800 EN_RST.
+			>> USART 3 for FT234XD connected to BT800 USB / for BT900 UART.
+			>> PB15 for BT800/BT900 EN_RST.
+			>> PB2 for BT900 RST.
+			>> PA7 for BT900 BT_MODE.
+			>> PB14 for BT900 BT_VSP.
+			>> PB12 for BT900 Host_Wkup.
 			
 */
 	
@@ -57,12 +61,12 @@ void Module_Init(void)
 	/* FT234XD UART */
   MX_USART3_UART_Init();
 	
-	/* BT800 EN_RST */
-	BT_RST_GPO_Init();
+	/* BT800/BT900 EN_RST */
+	BT_RST_GPIO_Init();
 #ifdef H02R1	 
-	BT_VSP_GPO_Init();
-	BT_MODE_GPO_Init();
-	BT_HOST_WKUP_GPI_Init();
+	BT_VSP_GPIO_Init();
+	BT_MODE_GPIO_Init();
+	BT_HOST_WKUP_GPIO_Init();
 #endif	
 	
   
