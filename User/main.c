@@ -89,11 +89,14 @@ int main(void)
 /* FrontEndTask function */
 void FrontEndTask(void * argument)
 {
-	
+
+	IND_blink(200);
+	Delay_ms(100);
+	IND_blink(200);
+	Delay_ms(100);
   /* Infinite loop */
   for(;;)
   {
-
 	}
 }
 
