@@ -1,0 +1,277 @@
+// BitzOS (BOS) V0.1.4 - Copyright (C) 2017 Hexabitz
+//	All rights reserved
+//
+//	File Name     : ProcessMsgBt900.sb
+//	Description   : Source code for control and process message on BT900 module.
+//
+//
+//******************************************************************************
+
+//******************************************************************************
+// Definitions
+//******************************************************************************
+
+// Set this to 0 to disable all debugging messages
+#define ENABLE_DEBUG_PRINTS             1
+
+// Delay timer
+#define DELAY_TIMER                     0
+#define DELAY_TIMER_NO_RECURRE          0
+#define DELAY_TIMER_RECURRE             1
+
+// Led d2 - SIO12
+#define LED_BT900_D2										12
+
+// UART
+#define UART_BAUDRATE										(921600)
+#define UART_OPTION											"CN81H"
+#define UART_RX_BUFFER                  (200)    //Depth of the UART Rx buffer
+#define UART_TX_BUFFER                  (200)    //Depth of the UART Tx buffer
+
+// define naming bluetooth that other device can see name of this module
+#define BTC_FRIENDLY_NAME               "Hexabitz-H02Rx"
+
+#define BTC_PIN                         "0000"
+#define BTC_ADDR                        "ACBC329047BA"
+
+
+//******************************************************************************
+// Library Import
+//******************************************************************************
+
+//******************************************************************************
+// Global Variable Declarations
+//******************************************************************************
+
+DIM rc
+// led's variable
+DIM valueLedBt : valueLedBt = 0
+DIM numberBlinkLed : numberBlinkLed = 0
+DIM delayMsLedBt : delayMsLedBt = 0
+DIM periodMsLedBt : periodMsLedBt = 0
+
+DIM StreamUartHandle
+DIM StreamSPPHandle
+DIM SPPHandleConnection
+DIM StreamBridgeHandle
+
+// UART Reception buffer
+DIM UartRxBuffer$
+
+// UART Trasmission buffer
+DIM UartTxBuffer$
+
+//******************************************************************************
+// Function and Subroutine definitions
+//******************************************************************************
+
+//------------------------------------------------------------------------------
+// This function is called on event EVTMR0 from setting LedStatus function
+// to blink D2 led on H02Rx board
+//------------------------------------------------------------------------------
+FUNCTION BlinkLed()
+  IF 0 == numberBlinkLed THEN
+    GpioWrite(LED_BT900_D2, 0)  // turns D2 led off
+    EXITFUNC 0
+  ELSE
+    numberBlinkLed = numberBlinkLed - 1
+  ENDIF
+
+  IF 0 == valueLedBt THEN
+    valueLedBt = 1
+    TimerStart(DELAY_TIMER,delayMsLedBt,DELAY_TIMER_NO_RECURRE)
+  ELSE
+    valueLedBt = 0
+    TimerStart(DELAY_TIMER,periodMsLedBt - delayMsLedBt,DELAY_TIMER_NO_RECURRE)
+  ENDIF
+
+  GpioWrite(LED_BT900_D2, valueLedBt)
+ENDFUNC 1
+
+//------------------------------------------------------------------------------
+// Input parameter:
+//      - number: number of time to blink led
+//      - durationMs: range from 0 to PERIOD_TIME_LED_STATUS
+//------------------------------------------------------------------------------
+SUB LedStatus(number, durationMs, periodMs)
+  numberBlinkLed = number * 2
+  delayMsLedBt = durationMs
+  periodMsLedBt = periodMs
+  valueLedBt = 0
+  TimerStart(DELAY_TIMER,0,DELAY_TIMER_NO_RECURRE)
+  ONEVENT EVTMR0  CALL BlinkLed  // call function to blinkled
+ENDSUB
+
+//------------------------------------------------------------------------------
+// Register Error Handler as early as possible
+//------------------------------------------------------------------------------
+SUB HandlerOnErr()
+  IF (ENABLE_DEBUG_PRINTS!=0) THEN
+    PRINT "\n OnErr - ";GetLastError();"\n" //Need to define frame msg error
+  ENDIF
+ENDSUB
+ONERROR NEXT HandlerOnErr
+
+//------------------------------------------------------------------------------
+// For debugging to send a message to STM chips for processing error
+// --- rc = result code
+// --- ln = code error
+//------------------------------------------------------------------------------
+SUB AssertRC(rc,ln)
+    IF ((0 != rc) && (0 != ENABLE_DEBUG_PRINTS)) THEN
+        //PRINT ln$
+        LedStatus(ln, 100, 200)
+    ENDIF
+ENDSUB
+
+
+//------------------------------------------------------------------------------
+// Initialise and instantiate service, characteristic, start adverts
+//------------------------------------------------------------------------------
+SUB OnStartup()
+  DIM strTempNameBt$
+  DIM tempBtcAddr$
+
+  // Setting D2 LED pin on the BT900
+  rc = GpioSetFunc(LED_BT900_D2, 2, 0) // DIGITAL_OUT; Initial output to LOW
+  AssertRC(rc, 2)
+
+  // Set friendly name
+  strTempNameBt$ = BTC_FRIENDLY_NAME
+  rc = BtcSetFriendlyName(strTempNameBt$)
+  AssertRC(rc, 3)
+
+  // Configure discoverability mode
+  rc = BtcDiscoveryConfig(0, 0)  // Discoverability type: General
+  AssertRC(rc, 4)
+
+  // Set discoverable
+  rc = BtcSetDiscoverable(1, 180)  // Discoverable; The length of time in seconds
+  AssertRC(rc, 5)
+
+  // Set connectable so other devices can connect to this device
+  rc = BtcSetConnectable(0) // Connectable
+  AssertRC(rc, 6)
+
+  // Set pairable
+  rc = BtcSetPairable(1)  // Not pairable
+  AssertRC(rc, 7)
+
+  // Pairing information is stored in the bonding manager
+  rc = BtcSavePairings(1)
+  AssertRC(rc, 8)
+
+  // Set inquiry
+  //rc = BtcInquiryConfig(0, 0)   // Inquiry Type: General Inquiry
+  //AssertRC(rc, 9)
+  //rc = BtcInquiryConfig(1, 2)   // Inquiry Mode: Extended
+  //AssertRC(rc, 10)
+  //rc = BtcInquiryConfig(2, 100) // Max number of inquiry responses to receive
+  //AssertRC(rc, 11)
+
+  // Start inquiry
+  //rc = BtcInquiryStart(10) // time out in seconds
+  //AssertRC(rc, 12)
+
+  tempBtcAddr$ = BTC_ADDR
+  rc = BtcPair(tempBtcAddr$, 2)
+  AssertRC(rc, 13)
+  rc = BtcSPPConnect(tempBtcAddr$)
+
+  // Set friendly name
+  strTempNameBt$ = BTC_FRIENDLY_NAME
+  rc = BtcSetFriendlyName(strTempNameBt$)
+  AssertRC(rc, 14)
+
+  // setting UART
+  rc = UartOpen(921600, 0, 0, "CN81H")
+  AssertRC(rc, 15)
+
+  // set SPP
+  rc = BtcSppOpen(SPPHandleConnection)
+  AssertRC(rc, 16)
+
+ENDSUB
+
+//------------------------------------------------------------------------------
+// Close connections so that we can run another app without problems
+//------------------------------------------------------------------------------
+SUB CloseConnections()
+ENDSUB
+
+FUNCTION HandlerInqResp(respType)
+ENDFUNC 1
+
+FUNCTION BtcTimeOutHeadler()
+  LedStatus(10, 250, 500) // number of blink: 10; duration: 250; period: 500
+ENDFUNC 1
+
+FUNCTION HandlerPairReq()
+  DIM tempBtcAddr$
+
+  rc = BtcGetPAIRRequestBDAddr(tempBtcAddr$)
+  IF 0 == rc THEN
+    rc = BtcSendPairResp(1)
+  ENDIF
+ENDFUNC 1
+
+FUNCTION HandlerPINReq()
+  DIM tempBtcAddr$
+  DIM tempBtcPin$
+
+  tempBtcAddr$ = BTC_ADDR
+  tempBtcPin$ = BTC_PIN
+  rc = BtcGetPinRequestBDAddr(tempBtcAddr$)
+  rc = BtcSendPinResp(tempBtcPin$)
+ENDFUNC 1
+
+FUNCTION HandlerPairRes(nRes)
+  IF (0 == nRes) THEN
+    LedStatus(4, 250, 500)
+  ELSE
+    LedStatus(5, 250, 500)
+  ENDIF
+ENDFUNC 1
+
+FUNCTION SppConnect(headle, result)
+  SPPHandleConnection = headle
+  // Bridge to UART
+  rc = StreamGetUartHandle(StreamUartHandle)
+  rc = StreamGetSPPHandle(SPPHandleConnection, StreamSPPHandle)
+  rc = StreamBridge(StreamUartHandle, StreamSPPHandle, StreamBridgeHandle)
+ENDFUNC 1
+
+FUNCTION HandlerUartRx()
+  DIM txLength
+  txLength = UartReadN(UartRxBuffer$, UART_RX_BUFFER)
+  rc = BtcSPPWrite(SPPHandleConnection, UartRxBuffer$, txLength)
+ENDFUNC 1
+
+//******************************************************************************
+// Equivalent to main() in C
+//******************************************************************************
+
+ONEVENT EVINQRESP               CALL HandlerInqResp
+ONEVENT EVBTC_INQUIRY_TIMEOUT   CALL BtcTimeOutHeadler
+ONEVENT EVBTC_PAIR_REQUEST      CALL HandlerPairReq
+ONEVENT EVBTC_PIN_REQUEST       CALL HandlerPINReq
+ONEVENT EVBTC_PAIR_RESULT       CALL HandlerPairRes
+ONEVENT EVSPPCONN               CALL SppConnect
+ONEVENT EVUARTRX                CALL HandlerUartRx
+
+
+OnStartup()
+IF 0 == rc THEN
+  LedStatus(2, 250, 500)
+ELSE
+  LedStatus(3, 250, 500)
+ENDIF
+
+//------------------------------------------------------------------------------
+// Wait for a synchronous event.
+// An application can have multiple <WaitEvent> statements
+//------------------------------------------------------------------------------
+WAITEVENT
+
+CloseConnections()
+
