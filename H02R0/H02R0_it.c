@@ -244,8 +244,22 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 		/* Read buffer */
 		cRxedChar = huart->Instance->RDR;
 		
+		/* Received Bluetooth's message for control this module */
+		if((PORT_BTC_CONN == port) && ('|' == cRxedChar))
+		{
+			portStatus[port] = MSG;
+			/* Activate DMA transfer */
+			PortMemDMA3_Setup(huart, MAX_MESSAGE_SIZE);
+    }
+    /* end a frame message that have been sent from bluetooth module */
+    else if((PORT_BTC_CONN == port) && ('~' == cRxedChar))
+    {
+			cRxedChar = '\0';
+      xHigherPriorityTaskWoken = pdFALSE;
+      vTaskNotifyGiveFromISR(ControlBluetoothTaskHandle, &( xHigherPriorityTaskWoken ) );
+		}
 		/* Received CLI request? */
-		if( cRxedChar == '\r' )
+		else if(cRxedChar == '\r' )
 		{
 			cRxedChar = '\0';
 			PcPort = port; 
