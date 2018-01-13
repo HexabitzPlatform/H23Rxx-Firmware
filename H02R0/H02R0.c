@@ -147,6 +147,8 @@ void Module_Init(void)
 	btRunScript();
 }
 
+/*-----------------------------------------------------------*/
+
 /* ControlBluetoothTask function
 */
 void ControlBluetoothTask(void * argument)
@@ -225,7 +227,9 @@ void ControlBluetoothTask(void * argument)
 }
 
 /*-----------------------------------------------------------*/
-/* --- H02R0 message processing task */
+
+/* --- H02R0 message processing task 
+*/
 Module_Status Module_MessagingTask(uint16_t code, uint8_t port, uint8_t src, uint8_t dst)
 {
 	Module_Status result = H02R0_OK;
@@ -266,20 +270,43 @@ Module_Status Module_MessagingTask(uint16_t code, uint8_t port, uint8_t src, uin
 
 	return result;
 }
+
 /*-----------------------------------------------------------*/
 
+/* --- Register this module CLI Commands 
+*/
+void RegisterModuleCLICommands(void)
+{
+	FreeRTOS_CLIRegisterCommand( &btUpdateScriptCommandDefinition);
+	FreeRTOS_CLIRegisterCommand( &btRunScriptCommandDefinition);
+	FreeRTOS_CLIRegisterCommand( &btVspModeCommandDefinition);
+	FreeRTOS_CLIRegisterCommand( &btSetBaudrateCommandDefinition);	
+}
+
+/*-----------------------------------------------------------*/
+
+/* --- Please add description!
+*/
 void btEnableHandshakeUart(void)
 {
 	__HAL_UART_HWCONTROL_CTS_ENABLE(GetUart(PORT_BTC_CONN));
 	__HAL_UART_HWCONTROL_RTS_ENABLE(GetUart(PORT_BTC_CONN));
 }
 
+/*-----------------------------------------------------------*/
+
+/* --- Please add description!
+*/
 void btDisableHandshakeUart(void)
 {
 	__HAL_UART_HWCONTROL_CTS_DISABLE(GetUart(PORT_BTC_CONN));
 	__HAL_UART_HWCONTROL_RTS_DISABLE(GetUart(PORT_BTC_CONN));
 }
 
+/*-----------------------------------------------------------*/
+
+/* --- Please add description!
+*/
 void btSendMsgToTerminal(uint8_t *pStr)
 {
   #if (H02R0_SHOW_DEBUG_INFO_TERMINAL == H02R0_ENABLE_DEBUG_BTC)
@@ -293,12 +320,20 @@ void btSendMsgToTerminal(uint8_t *pStr)
   #endif
 }
 
+/*-----------------------------------------------------------*/
+
+/* --- Please add description!
+*/
 void btShowMsgOnTerminal(uint8_t *pStr1, uint8_t *pStr2)
 {
   btSendMsgToTerminal(pStr1);
   btSendMsgToTerminal(pStr2);
 }
 
+/*-----------------------------------------------------------*/
+
+/* --- Please add description!
+*/
 HAL_StatusTypeDef btSendCommandToBtc(uint8_t *command)
 {
 	HAL_StatusTypeDef result;
@@ -307,6 +342,10 @@ HAL_StatusTypeDef btSendCommandToBtc(uint8_t *command)
 	return result;
 }
 
+/*-----------------------------------------------------------*/
+
+/* --- Please add description!
+*/
 void btResetBt900Module(void)
 {
   BT_CLEAR_RST_PIN();
@@ -315,6 +354,10 @@ void btResetBt900Module(void)
   Delay_ms_no_rtos(1600); /* The BT900 module start-up time is ~1.6 seconds */
 }
 
+/*-----------------------------------------------------------*/
+
+/* --- Please add description!
+*/
 void btUpdateScript(void)
 {
   BT_CLEAR_VSP_PIN();
@@ -322,6 +365,10 @@ void btUpdateScript(void)
   btResetBt900Module();
 }
 
+/*-----------------------------------------------------------*/
+
+/* --- Please add description!
+*/
 void btRunScript(void)
 {
 	btDisableHandshakeUart();
@@ -331,6 +378,10 @@ void btRunScript(void)
 	btResetBt900Module();
 }
 
+/*-----------------------------------------------------------*/
+
+/* --- Please add description!
+*/
 Module_Status btVspMode(int8_t inputVspMode)
 {
 	Module_Status result = H02R0_OK;
