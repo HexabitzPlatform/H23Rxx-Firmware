@@ -79,7 +79,7 @@ const CLI_Command_Definition_t btUpdateScriptCommandDefinition =
 	0 /* No parameters are expected. */
 };
 
-/* CLI command structure : bt-update-script */
+/* CLI command structure : bt-run-script */
 const CLI_Command_Definition_t btRunScriptCommandDefinition =
 {
 	( const int8_t * ) "bt-run-script", /* The command string to type. */
@@ -88,7 +88,7 @@ const CLI_Command_Definition_t btRunScriptCommandDefinition =
 	0 /* No parameters are expected. */
 };
 
-/* CLI command structure : bt-set-vsp-mode */
+/* CLI command structure : bt-vsp-mode */
 const CLI_Command_Definition_t btVspModeCommandDefinition =
 {
 	( const int8_t * ) "bt-vsp-mode", /* The command string to type. */
@@ -101,9 +101,9 @@ const CLI_Command_Definition_t btVspModeCommandDefinition =
 const CLI_Command_Definition_t btSetBaudrateCommandDefinition =
 {
 	( const int8_t * ) "bt-set-baudrate", /* The command string to type. */
-	( const int8_t * ) "bt-set-baudrate:\r\n Set speed connection between MCU and Bluetooth module \r\n\r\n",
+	( const int8_t * ) "bt-set-baudrate:\r\n Set connection speed between MCU and Bluetooth module \r\n\r\n",
 	btSetBaudrateCommand, /* The function to run. */
-	1 /* No parameters are expected. */
+	1 /* One parameter is expected. */
 };
 
 
@@ -128,7 +128,7 @@ void Module_Init(void)
   MX_USART5_UART_Init();
 	MX_USART6_UART_Init();
 
-	/* FT234XD UART */
+	/* FT234XD/BT900 UART */
   MX_USART3_UART_Init();
 
 	/* BT800/BT900 EN_RST */
@@ -141,7 +141,7 @@ void Module_Init(void)
 #endif
   /* setting baudrate */
   UpdateBaudrate(PORT_BTC_CONN, 115200); /* Normal baudrate for BT900 */
-	/* Create the logging task */
+	/* Create the Bluetooth module task */
 	xTaskCreate(ControlBluetoothTask, (const char *) "ControlBluetooth", (2*configMINIMAL_STACK_SIZE), NULL, osPriorityNormal, &ControlBluetoothTaskHandle);
 	/* In default, the BT900 will run in the "Self-contained Run mode" */
 	btRunScript();
@@ -158,7 +158,7 @@ void ControlBluetoothTask(void * argument)
 	/* Infinite loop */
 	for(;;)
 	{
-		/* Wait forever until a message is received on one of the ports */
+		/* Wait forever until a message is received from the Bluetooth module */
 		ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
     /* length message */
     messageLength[PORT_BTC_CONN-1] = cMessage[PORT_BTC_CONN-1][1] - 0x30;
@@ -200,7 +200,7 @@ void ControlBluetoothTask(void * argument)
 
       case CODE_H02R0_SHOW_DEBUG_INFO:
 				memcpy(tMessage, cMessage[PORT_BTC_CONN-1], (size_t)messageLength[PORT_BTC_CONN-1]);
-				btShowMsgOnTerminal("\r\n", tMessage);
+				btShowMsgOnTerminal((uint8_t *)"\r\n", tMessage);
         break;
 
       default:
