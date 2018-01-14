@@ -155,7 +155,7 @@ void ControlBluetoothTask(void * argument)
 {
 	static uint8_t code_field = 0;
   uint8_t tMessage[MAX_MESSAGE_SIZE] = {0};
-  
+
 
 	/* Infinite loop */
 	for(;;)
@@ -228,7 +228,7 @@ void ControlBluetoothTask(void * argument)
 
 /*-----------------------------------------------------------*/
 
-/* --- H02R0 message processing task 
+/* --- H02R0 message processing task
 */
 Module_Status Module_MessagingTask(uint16_t code, uint8_t port, uint8_t src, uint8_t dst)
 {
@@ -273,19 +273,19 @@ Module_Status Module_MessagingTask(uint16_t code, uint8_t port, uint8_t src, uin
 
 /*-----------------------------------------------------------*/
 
-/* --- Register this module CLI Commands 
+/* --- Register this module CLI Commands
 */
 void RegisterModuleCLICommands(void)
 {
 	FreeRTOS_CLIRegisterCommand( &btUpdateScriptCommandDefinition);
 	FreeRTOS_CLIRegisterCommand( &btRunScriptCommandDefinition);
 	FreeRTOS_CLIRegisterCommand( &btVspModeCommandDefinition);
-	FreeRTOS_CLIRegisterCommand( &btSetBaudrateCommandDefinition);	
+	FreeRTOS_CLIRegisterCommand( &btSetBaudrateCommandDefinition);
 }
 
 /*-----------------------------------------------------------*/
 
-/* --- Please add description!
+/* --- Enable CTS/RTS flow control
 */
 void btEnableHandshakeUart(void)
 {
@@ -295,7 +295,7 @@ void btEnableHandshakeUart(void)
 
 /*-----------------------------------------------------------*/
 
-/* --- Please add description!
+/* --- Disable CTS/RTS flow control
 */
 void btDisableHandshakeUart(void)
 {
@@ -305,7 +305,7 @@ void btDisableHandshakeUart(void)
 
 /*-----------------------------------------------------------*/
 
-/* --- Please add description!
+/* --- Setting connection to send a message into Terminal app
 */
 void btSendMsgToTerminal(uint8_t *pStr)
 {
@@ -322,7 +322,7 @@ void btSendMsgToTerminal(uint8_t *pStr)
 
 /*-----------------------------------------------------------*/
 
-/* --- Please add description!
+/* --- Debug function to show message contain in Terminal app
 */
 void btShowMsgOnTerminal(uint8_t *pStr1, uint8_t *pStr2)
 {
@@ -332,7 +332,7 @@ void btShowMsgOnTerminal(uint8_t *pStr1, uint8_t *pStr2)
 
 /*-----------------------------------------------------------*/
 
-/* --- Please add description!
+/* --- Send command from MCU to Bluetooth module its setting/control
 */
 HAL_StatusTypeDef btSendCommandToBtc(uint8_t *command)
 {
@@ -344,7 +344,7 @@ HAL_StatusTypeDef btSendCommandToBtc(uint8_t *command)
 
 /*-----------------------------------------------------------*/
 
-/* --- Please add description!
+/* --- Setting pins to reset bluetooth module
 */
 void btResetBt900Module(void)
 {
@@ -356,7 +356,7 @@ void btResetBt900Module(void)
 
 /*-----------------------------------------------------------*/
 
-/* --- Please add description!
+/* --- Setting pins to update new script on bluetooth module
 */
 void btUpdateScript(void)
 {
@@ -367,7 +367,7 @@ void btUpdateScript(void)
 
 /*-----------------------------------------------------------*/
 
-/* --- Please add description!
+/* --- Setting pins to run automatically $autorun$ script in bluetooth module
 */
 void btRunScript(void)
 {
@@ -380,7 +380,7 @@ void btRunScript(void)
 
 /*-----------------------------------------------------------*/
 
-/* --- Please add description!
+/* --- Setting pins to run VSP mode
 */
 Module_Status btVspMode(int8_t inputVspMode)
 {
