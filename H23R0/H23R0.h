@@ -94,6 +94,13 @@
 #ifdef H23R0
 	#define	_BT_RST_PIN			GPIO_PIN_15
 	#define	_BT_RST_PORT		GPIOB
+  /* to be defined in future */
+	#define	_BT_VSP_PIN							GPIO_PIN_14
+	#define	_BT_VSP_PORT						GPIOB
+	#define	_BT_MODE_PIN						GPIO_PIN_7
+	#define	_BT_MODE_PORT						GPIOA
+	#define	_BT_HOST_WKUP_PIN				GPIO_PIN_12
+	#define	_BT_HOST_WKUP_PORT			GPIOB
 #endif
 #ifdef H02R1
 	#define	_BT_RST_PIN							GPIO_PIN_2
@@ -186,7 +193,7 @@ extern TaskHandle_t ControlBluetoothTaskHandle;
    -----------------------------------------------------------------------
 */
 
-#ifdef H02R1
+#if defined(H02R1) || defined(H23R0)
 	#define BT_SET_RST_PIN()				HAL_GPIO_WritePin(_BT_RST_PORT,_BT_RST_PIN,GPIO_PIN_SET)
 	#define BT_CLEAR_RST_PIN()			HAL_GPIO_WritePin(_BT_RST_PORT,_BT_RST_PIN,GPIO_PIN_RESET);
 
