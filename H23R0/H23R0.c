@@ -133,7 +133,7 @@ void Module_Init(void)
 
 	/* BT800/BT900 EN_RST */
 	BT_RST_GPIO_Init();
-#ifdef H02R1
+#ifdef H23R1
 	BT_VSP_GPIO_Init();
 	BT_MODE_GPIO_Init();
 	BT_HOST_WKUP_GPIO_Init();

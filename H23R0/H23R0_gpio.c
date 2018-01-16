@@ -85,7 +85,7 @@ void BT_RST_GPIO_Init(void)
 	HAL_GPIO_Init(_BT_RST_PORT, &GPIO_InitStruct);
 }
 
-#ifdef H02R1
+#ifdef H23R1
 /* --- Configure BT900 VSP Command Mode GPO ---
 */
 void BT_VSP_GPIO_Init(void)

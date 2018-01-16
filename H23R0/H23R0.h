@@ -20,7 +20,7 @@
 /* Exported definitions -------------------------------------------------------*/
 
 //#define	modulePN		_H23R0
-#define	modulePN		_H02R1
+#define	modulePN		_H23R1
 
 /* Port-related definitions */
 #define	NumOfPorts		6
@@ -102,7 +102,7 @@
 	#define	_BT_HOST_WKUP_PIN				GPIO_PIN_12
 	#define	_BT_HOST_WKUP_PORT			GPIOB
 #endif
-#ifdef H02R1
+#ifdef H23R1
 	#define	_BT_RST_PIN							GPIO_PIN_2
 	#define	_BT_RST_PORT						GPIOB
 	#define	_BT_VSP_PIN							GPIO_PIN_14
@@ -193,7 +193,7 @@ extern TaskHandle_t ControlBluetoothTaskHandle;
    -----------------------------------------------------------------------
 */
 
-#if defined(H02R1) || defined(H23R0)
+#if defined(H23R1) || defined(H23R0)
 	#define BT_SET_RST_PIN()				HAL_GPIO_WritePin(_BT_RST_PORT,_BT_RST_PIN,GPIO_PIN_SET)
 	#define BT_CLEAR_RST_PIN()			HAL_GPIO_WritePin(_BT_RST_PORT,_BT_RST_PIN,GPIO_PIN_RESET);
 
