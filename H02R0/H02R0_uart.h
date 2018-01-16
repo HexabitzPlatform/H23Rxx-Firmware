@@ -1,6 +1,6 @@
 /**
   ******************************************************************************
-  * File Name          : H02R0_uart.h
+  * File Name          : H23R0_uart.h
   * Description        : This file provides code for the configuration
   *                      of the USART instances.
   ******************************************************************************
@@ -31,15 +31,15 @@
   *
   ******************************************************************************
   */
-	
+
 /*
 		MODIFIED by Hexabitz for BitzOS (BOS) V0.0.0 - Copyright (C) 2016 Hexabitz
     All rights reserved
 */
 
 /* Define to prevent recursive inclusion -------------------------------------*/
-#ifndef __H02R0_uart_H
-#define __H02R0_uart_H
+#ifndef __H23R0_uart_H
+#define __H23R0_uart_H
 #ifdef __cplusplus
  extern "C" {
 #endif
@@ -52,14 +52,14 @@ extern FlagStatus UartRxReady;
 extern FlagStatus UartTxReady;
 extern uint8_t PcPort;
 
-	 
+
 // Blocking (polling-based) read
 #define readPx(port, buffer, n, timeout) while(HAL_UART_Receive(GetUart(port), (uint8_t *)buffer, n, timeout) != HAL_OK) {}
-	
+
 // Blocking (polling-based) write
 #define writePx(port, buffer, timeout) while(HAL_UART_Transmit(GetUart(port), (uint8_t *)buffer, strlen(buffer), timeout) != HAL_OK) {}
 
-/* Check which UART interrupt occured */	 
+/* Check which UART interrupt occured */
 #define HAL_UART_GET_IT_SOURCE(__HANDLE__, __INTERRUPT__)  ((((__HANDLE__)->Instance->ISR & (__INTERRUPT__)) == (__INTERRUPT__)) ? SET : RESET)
 
 /* External function prototypes -----------------------------------------------*/
@@ -74,7 +74,7 @@ extern HAL_StatusTypeDef writePxITMutex(uint8_t port, char *buffer, uint16_t n, 
 #ifdef __cplusplus
 }
 #endif
-#endif /*__H02R0_uart_H */
+#endif /*__H23R0_uart_H */
 
 /**
   * @}

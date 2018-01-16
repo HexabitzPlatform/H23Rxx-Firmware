@@ -1,8 +1,8 @@
 /**
   ******************************************************************************
-  * File Name          : H02R0_gpio.h
-  * Description        : This file contains all the functions prototypes for 
-  *                      the gpio  
+  * File Name          : H23R0_gpio.h
+  * Description        : This file contains all the functions prototypes for
+  *                      the gpio
   ******************************************************************************
   *
   * COPYRIGHT(c) 2015 STMicroelectronics
@@ -31,15 +31,15 @@
   *
   ******************************************************************************
   */
-	
+
 /*
 		MODIFIED by Hexabitz for BitzOS (BOS) V0.0.0 - Copyright (C) 2016 Hexabitz
     All rights reserved
 */
 
 /* Define to prevent recursive inclusion -------------------------------------*/
-#ifndef __H02R0_gpio_H
-#define __H02R0_gpio_H
+#ifndef __H23R0_gpio_H
+#define __H23R0_gpio_H
 #ifdef __cplusplus
  extern "C" {
 #endif
@@ -63,7 +63,7 @@ extern void BT_CTS_RTS_GPIO_Init(void);
 #ifdef __cplusplus
 }
 #endif
-#endif /*__H02R0_gpio_H */
+#endif /*__H23R0_gpio_H */
 
 
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

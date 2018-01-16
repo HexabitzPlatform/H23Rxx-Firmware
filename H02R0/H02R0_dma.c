@@ -1,6 +1,6 @@
 /**
   ******************************************************************************
-  * File Name          : H02R0_DMA.c
+  * File Name          : H23R0_DMA.c
   * Description        : This file provides code for the configuration
   *                      of the DMA instances.
   ******************************************************************************
@@ -31,7 +31,7 @@
   *
   ******************************************************************************
   */
-	
+
 /*
 		MODIFIED by Hexabitz for BitzOS (BOS) V0.0.0 - Copyright (C) 2016 Hexabitz
     All rights reserved
@@ -71,22 +71,22 @@ void PortPortDMA3_Init(void);
 
 /*-----------------------------------------------------------*/
 
-/** 
+/**
   * Enable DMA controller clock
   */
-void MX_DMA_Init(void) 
+void MX_DMA_Init(void)
 {
 	/* DMA controller clock enable */
 	__DMA1_CLK_ENABLE();
 	__DMA2_CLK_ENABLE();
-	
+
 	PortMemDMA1_Init();
 	PortMemDMA2_Init();
 	PortMemDMA3_Init();
 	PortPortDMA1_Init();
 	PortPortDMA2_Init();
 	PortPortDMA3_Init();
-	
+
 }
 
 /*-----------------------------------------------------------*/
@@ -101,17 +101,17 @@ void PortMemDMA1_Init(void)
 	portMemDMA1.Init.MemInc = DMA_MINC_ENABLE;
 	portMemDMA1.Init.PeriphDataAlignment = DMA_PDATAALIGN_BYTE;
 	portMemDMA1.Init.MemDataAlignment = DMA_MDATAALIGN_BYTE;
-	portMemDMA1.Init.Mode = DMA_NORMAL; 
+	portMemDMA1.Init.Mode = DMA_NORMAL;
 	portMemDMA1.Init.Priority = DMA_PRIORITY_MEDIUM;
-	
-	HAL_DMA_Init(&portMemDMA1);		
+
+	HAL_DMA_Init(&portMemDMA1);
 }
 
 /*-----------------------------------------------------------*/
 
 /* Messaging DMA 1 (port-to-memory) setup */
 void PortMemDMA1_Setup(UART_HandleTypeDef* huart, uint8_t num)
-{	
+{
 	/* UART RX DMA (DMA1 Ch5) */
 	if (huart->Instance == USART1) {
 		__HAL_DMA1_REMAP(HAL_DMA1_CH5_USART1_RX);
@@ -129,16 +129,16 @@ void PortMemDMA1_Setup(UART_HandleTypeDef* huart, uint8_t num)
 		__HAL_DMA1_REMAP(HAL_DMA1_CH5_USART7_RX);
 	} else if (huart->Instance == USART8) {
 		__HAL_DMA1_REMAP(HAL_DMA1_CH5_USART8_RX);
-	}		
+	}
 	__HAL_LINKDMA(huart,hdmarx,portMemDMA1);
-	
-	
+
+
 	/* DMA interrupt init */
 	HAL_NVIC_SetPriority(DMA1_Ch4_7_DMA2_Ch3_5_IRQn, 1, 0);
 	HAL_NVIC_EnableIRQ(DMA1_Ch4_7_DMA2_Ch3_5_IRQn);
-	
-	/* Start DMA stream	*/	
-	HAL_UART_Receive_DMA(huart, (uint8_t *)&cMessage[GetPort(huart)-1], num);			
+
+	/* Start DMA stream	*/
+	HAL_UART_Receive_DMA(huart, (uint8_t *)&cMessage[GetPort(huart)-1], num);
 }
 
 /*-----------------------------------------------------------*/
@@ -155,15 +155,15 @@ void PortMemDMA2_Init(void)
 	portMemDMA2.Init.MemDataAlignment = DMA_MDATAALIGN_BYTE;
 	portMemDMA2.Init.Mode = DMA_NORMAL;
 	portMemDMA2.Init.Priority = DMA_PRIORITY_MEDIUM;
-	
-	HAL_DMA_Init(&portMemDMA2);		
+
+	HAL_DMA_Init(&portMemDMA2);
 }
 
 /*-----------------------------------------------------------*/
 
 /* Messaging DMA 2 (port-to-memory) setup */
 void PortMemDMA2_Setup(UART_HandleTypeDef* huart, uint8_t num)
-{	
+{
 	/* UART RX DMA (DMA1 Ch6) */
 	if (huart->Instance == USART1) {
 		__HAL_DMA1_REMAP(HAL_DMA1_CH6_USART1_RX);
@@ -181,15 +181,15 @@ void PortMemDMA2_Setup(UART_HandleTypeDef* huart, uint8_t num)
 		__HAL_DMA1_REMAP(HAL_DMA1_CH6_USART7_RX);
 	} else if (huart->Instance == USART8) {
 		__HAL_DMA1_REMAP(HAL_DMA1_CH6_USART8_RX);
-	}		
+	}
 	__HAL_LINKDMA(huart,hdmarx,portMemDMA2);
-	
+
 	/* DMA interrupt init */
 	HAL_NVIC_SetPriority(DMA1_Ch4_7_DMA2_Ch3_5_IRQn, 1, 0);
 	HAL_NVIC_EnableIRQ(DMA1_Ch4_7_DMA2_Ch3_5_IRQn);
-	
-	/* Start DMA stream	*/	
-	HAL_UART_Receive_DMA(huart, (uint8_t *)&cMessage[GetPort(huart)-1], num);			
+
+	/* Start DMA stream	*/
+	HAL_UART_Receive_DMA(huart, (uint8_t *)&cMessage[GetPort(huart)-1], num);
 }
 
 /*-----------------------------------------------------------*/
@@ -206,15 +206,15 @@ void PortMemDMA3_Init(void)
 	portMemDMA3.Init.MemDataAlignment = DMA_MDATAALIGN_BYTE;
 	portMemDMA3.Init.Mode = DMA_NORMAL;
 	portMemDMA3.Init.Priority = DMA_PRIORITY_MEDIUM;
-	
-	HAL_DMA_Init(&portMemDMA3);		
+
+	HAL_DMA_Init(&portMemDMA3);
 }
 
 /*-----------------------------------------------------------*/
 
 /* Messaging DMA 3 (port-to-memory) setup */
 void PortMemDMA3_Setup(UART_HandleTypeDef* huart, uint8_t num)
-{	
+{
 	/* UART RX DMA (DMA2 Ch2) */
 	if (huart->Instance == USART1) {
 		__HAL_DMA2_REMAP(HAL_DMA2_CH2_USART1_RX);
@@ -232,15 +232,15 @@ void PortMemDMA3_Setup(UART_HandleTypeDef* huart, uint8_t num)
 		__HAL_DMA2_REMAP(HAL_DMA2_CH2_USART7_RX);
 	} else if (huart->Instance == USART8) {
 		__HAL_DMA2_REMAP(HAL_DMA2_CH2_USART8_RX);
-	}		
+	}
 	__HAL_LINKDMA(huart,hdmarx,portMemDMA3);
 
 	/* DMA interrupt init */
 	HAL_NVIC_SetPriority(DMA1_Ch2_3_DMA2_Ch1_2_IRQn, 1, 0);
 	HAL_NVIC_EnableIRQ(DMA1_Ch2_3_DMA2_Ch1_2_IRQn);
-	
-	/* Start DMA stream	*/	
-	HAL_UART_Receive_DMA(huart, (uint8_t *)&cMessage[GetPort(huart)-1], num);			
+
+	/* Start DMA stream	*/
+	HAL_UART_Receive_DMA(huart, (uint8_t *)&cMessage[GetPort(huart)-1], num);
 }
 
 /*-----------------------------------------------------------*/
@@ -256,16 +256,16 @@ void PortPortDMA1_Init(void)
 	portPortDMA1.Init.PeriphDataAlignment = DMA_PDATAALIGN_BYTE;
 	portPortDMA1.Init.MemDataAlignment = DMA_MDATAALIGN_BYTE;
 	portPortDMA1.Init.Mode = DMA_CIRCULAR;
-	portPortDMA1.Init.Priority = DMA_PRIORITY_HIGH;		
-		
-	HAL_DMA_Init(&portPortDMA1);	
+	portPortDMA1.Init.Priority = DMA_PRIORITY_HIGH;
+
+	HAL_DMA_Init(&portPortDMA1);
 }
 
 /*-----------------------------------------------------------*/
 
 /* Streaming DMA 1 (port-to-port) setup */
 void PortPortDMA1_Setup(UART_HandleTypeDef* huartSrc, UART_HandleTypeDef* huartDst, uint8_t num)
-{		
+{
 	/* UART RX DMA (DMA1 Ch1) */
 	if (huartSrc->Instance == USART1) {
 		__HAL_DMA1_REMAP(HAL_DMA1_CH1_USART1_RX);
@@ -283,22 +283,22 @@ void PortPortDMA1_Setup(UART_HandleTypeDef* huartSrc, UART_HandleTypeDef* huartD
 		__HAL_DMA1_REMAP(HAL_DMA1_CH1_USART7_RX);
 	} else if (huartSrc->Instance == USART8) {
 		__HAL_DMA1_REMAP(HAL_DMA1_CH1_USART8_RX);
-	}		
+	}
 	__HAL_LINKDMA(huartSrc,hdmarx,portPortDMA1);
-	
+
 	/* DMA interrupt init */
 	HAL_NVIC_SetPriority(DMA1_Ch1_IRQn, 1, 0);
 	HAL_NVIC_EnableIRQ(DMA1_Ch1_IRQn);
-	
-	/* Start DMA stream	*/	
+
+	/* Start DMA stream	*/
 	dmaStreamDst[0] = huartDst;
 	huartSrc->State = HAL_UART_STATE_READY;
 	HAL_UART_Receive_DMA(huartSrc, (uint8_t *)(&(huartDst->Instance->TDR)), num);
-	
+
 	/* Lock the ports */
 	portStatus[GetPort(huartSrc)] = STREAM;
 	portStatus[GetPort(huartDst)] = STREAM;
-	
+
 	/* Initialize counter */
 	DMAStream1count = 0;
 }
@@ -316,16 +316,16 @@ void PortPortDMA2_Init(void)
 	portPortDMA2.Init.PeriphDataAlignment = DMA_PDATAALIGN_BYTE;
 	portPortDMA2.Init.MemDataAlignment = DMA_MDATAALIGN_BYTE;
 	portPortDMA2.Init.Mode = DMA_CIRCULAR;
-	portPortDMA2.Init.Priority = DMA_PRIORITY_HIGH;		
-		
-	HAL_DMA_Init(&portPortDMA2);	
+	portPortDMA2.Init.Priority = DMA_PRIORITY_HIGH;
+
+	HAL_DMA_Init(&portPortDMA2);
 }
 
 /*-----------------------------------------------------------*/
 
 /* Streaming DMA 2 (port-to-port) setup */
 void PortPortDMA2_Setup(UART_HandleTypeDef* huartSrc, UART_HandleTypeDef* huartDst, uint8_t num)
-{		
+{
 	/* UART RX DMA (DMA1 Ch3) */
 	if (huartSrc->Instance == USART1) {
 		__HAL_DMA1_REMAP(HAL_DMA1_CH3_USART1_RX);
@@ -343,22 +343,22 @@ void PortPortDMA2_Setup(UART_HandleTypeDef* huartSrc, UART_HandleTypeDef* huartD
 		__HAL_DMA1_REMAP(HAL_DMA1_CH3_USART7_RX);
 	} else if (huartSrc->Instance == USART8) {
 		__HAL_DMA1_REMAP(HAL_DMA1_CH3_USART8_RX);
-	}		
+	}
 	__HAL_LINKDMA(huartSrc,hdmarx,portPortDMA2);
-	
+
 	/* DMA interrupt init */
 	HAL_NVIC_SetPriority(DMA1_Ch2_3_DMA2_Ch1_2_IRQn, 1, 0);
 	HAL_NVIC_EnableIRQ(DMA1_Ch2_3_DMA2_Ch1_2_IRQn);
-	
-	/* Start DMA stream	*/	
+
+	/* Start DMA stream	*/
 	dmaStreamDst[1] = huartDst;
 	huartSrc->State = HAL_UART_STATE_READY;
 	HAL_UART_Receive_DMA(huartSrc, (uint8_t *)(&(huartDst->Instance->TDR)), num);
-	
+
 	/* Lock the ports */
 	portStatus[GetPort(huartSrc)] = STREAM;
 	portStatus[GetPort(huartDst)] = STREAM;
-	
+
 	/* Initialize counter */
 	DMAStream2count = 0;
 }
@@ -376,16 +376,16 @@ void PortPortDMA3_Init(void)
 	portPortDMA3.Init.PeriphDataAlignment = DMA_PDATAALIGN_BYTE;
 	portPortDMA3.Init.MemDataAlignment = DMA_MDATAALIGN_BYTE;
 	portPortDMA3.Init.Mode = DMA_CIRCULAR;
-	portPortDMA3.Init.Priority = DMA_PRIORITY_HIGH;		
-		
-	HAL_DMA_Init(&portPortDMA3);	
+	portPortDMA3.Init.Priority = DMA_PRIORITY_HIGH;
+
+	HAL_DMA_Init(&portPortDMA3);
 }
 
 /*-----------------------------------------------------------*/
 
 /* Streaming DMA 3 (port-to-port) setup */
 void PortPortDMA3_Setup(UART_HandleTypeDef* huartSrc, UART_HandleTypeDef* huartDst, uint8_t num)
-{		
+{
 	/* UART RX DMA (DMA2 Ch3) */
 	if (huartSrc->Instance == USART1) {
 		__HAL_DMA1_REMAP(HAL_DMA2_CH3_USART1_RX);
@@ -403,29 +403,29 @@ void PortPortDMA3_Setup(UART_HandleTypeDef* huartSrc, UART_HandleTypeDef* huartD
 		__HAL_DMA1_REMAP(HAL_DMA2_CH3_USART7_RX);
 	} else if (huartSrc->Instance == USART8) {
 		__HAL_DMA1_REMAP(HAL_DMA2_CH3_USART8_RX);
-	}		
+	}
 	__HAL_LINKDMA(huartSrc,hdmarx,portPortDMA3);
-	
+
 	/* DMA interrupt init */
 	HAL_NVIC_SetPriority(DMA1_Ch4_7_DMA2_Ch3_5_IRQn, 1, 0);
 	HAL_NVIC_EnableIRQ(DMA1_Ch4_7_DMA2_Ch3_5_IRQn);
-	
-	/* Start DMA stream	*/	
+
+	/* Start DMA stream	*/
 	dmaStreamDst[2] = huartDst;
 	huartSrc->State = HAL_UART_STATE_READY;
 	HAL_UART_Receive_DMA(huartSrc, (uint8_t *)(&(huartDst->Instance->TDR)), num);
-	
+
 	/* Lock the ports */
 	portStatus[GetPort(huartSrc)] = STREAM;
 	portStatus[GetPort(huartDst)] = STREAM;
-	
+
 	/* Initialize counter */
 	DMAStream3count = 0;
 }
 
 /*-----------------------------------------------------------*/
 
-/* --- Stop port-to-port DMA 1 --- 
+/* --- Stop port-to-port DMA 1 ---
 */
 void StopPortPortDMA1(void)
 {
@@ -433,7 +433,7 @@ void StopPortPortDMA1(void)
 	portPortDMA1.Instance->CNDTR = 0;
 	DMAStream1count = 0;
 	DMAStream1total = 0;
-	portStatus[GetPort(portPortDMA1.Parent)] = FREE; 
+	portStatus[GetPort(portPortDMA1.Parent)] = FREE;
 	portStatus[GetPort(dmaStreamDst[0])] = FREE;
 	/* Read these ports again */
 	HAL_UART_Receive_IT(portPortDMA1.Parent, (uint8_t *)&cRxedChar, 1);
@@ -443,7 +443,7 @@ void StopPortPortDMA1(void)
 
 /*-----------------------------------------------------------*/
 
-/* --- Stop port-to-port DMA 2 --- 
+/* --- Stop port-to-port DMA 2 ---
 */
 void StopPortPortDMA2(void)
 {
@@ -451,17 +451,17 @@ void StopPortPortDMA2(void)
 	portPortDMA2.Instance->CNDTR = 0;
 	DMAStream2count = 0;
 	DMAStream2total = 0;
-	portStatus[GetPort(portPortDMA2.Parent)] = FREE; 
-	portStatus[GetPort(dmaStreamDst[1])] = FREE;	
+	portStatus[GetPort(portPortDMA2.Parent)] = FREE;
+	portStatus[GetPort(dmaStreamDst[1])] = FREE;
 	/* Read these ports again */
 	HAL_UART_Receive_IT(portPortDMA2.Parent, (uint8_t *)&cRxedChar, 1);
 	HAL_UART_Receive_IT(dmaStreamDst[1], (uint8_t *)&cRxedChar, 1);
-	dmaStreamDst[1] = 0;	
+	dmaStreamDst[1] = 0;
 }
 
 /*-----------------------------------------------------------*/
 
-/* --- Stop port-to-port DMA 3 --- 
+/* --- Stop port-to-port DMA 3 ---
 */
 void StopPortPortDMA3(void)
 {
@@ -469,7 +469,7 @@ void StopPortPortDMA3(void)
 	portPortDMA3.Instance->CNDTR = 0;
 	DMAStream3count = 0;
 	DMAStream3total = 0;
-	portStatus[GetPort(portPortDMA3.Parent)] = FREE; 
+	portStatus[GetPort(portPortDMA3.Parent)] = FREE;
 	portStatus[GetPort(dmaStreamDst[2])] = FREE;
 	/* Read these ports again */
 	HAL_UART_Receive_IT(portPortDMA3.Parent, (uint8_t *)&cRxedChar, 1);

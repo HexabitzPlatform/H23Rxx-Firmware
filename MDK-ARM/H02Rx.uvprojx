@@ -335,7 +335,7 @@
               <MiscControls></MiscControls>
               <Define>USE_HAL_DRIVER,STM32F091xB,H02R1,_module=1</Define>
               <Undefine></Undefine>
-              <IncludePath>..\User;..\H02R0;..\BOS;..\Thirdparty\Middleware\FreeRTOS\Source\CMSIS_RTOS;..\Thirdparty\Middleware\FreeRTOS\Source\include;..\Thirdparty\Middleware\FreeRTOS\Source\portable\RVDS\ARM_CM0;..\Thirdparty\STM32F0xx_HAL_Driver\Inc\Legacy;..\Thirdparty\STM32F0xx_HAL_Driver\Inc;..\Thirdparty\CMSIS\Device\ST\STM32F0xx\Include;..\Thirdparty\CMSIS\Include</IncludePath>
+              <IncludePath>..\User;..\H23R0;..\BOS;..\Thirdparty\Middleware\FreeRTOS\Source\CMSIS_RTOS;..\Thirdparty\Middleware\FreeRTOS\Source\include;..\Thirdparty\Middleware\FreeRTOS\Source\portable\RVDS\ARM_CM0;..\Thirdparty\STM32F0xx_HAL_Driver\Inc\Legacy;..\Thirdparty\STM32F0xx_HAL_Driver\Inc;..\Thirdparty\CMSIS\Device\ST\STM32F0xx\Include;..\Thirdparty\CMSIS\Include</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -507,32 +507,32 @@
           </Files>
         </Group>
         <Group>
-          <GroupName>BITZ/H02R0</GroupName>
+          <GroupName>BITZ/H23R0</GroupName>
           <Files>
             <File>
-              <FileName>H02R0.c</FileName>
+              <FileName>H23R0.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\H02R0\H02R0.c</FilePath>
+              <FilePath>..\H23R0\H23R0.c</FilePath>
             </File>
             <File>
-              <FileName>H02R0_dma.c</FileName>
+              <FileName>H23R0_dma.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\H02R0\H02R0_dma.c</FilePath>
+              <FilePath>..\H23R0\H23R0_dma.c</FilePath>
             </File>
             <File>
-              <FileName>H02R0_gpio.c</FileName>
+              <FileName>H23R0_gpio.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\H02R0\H02R0_gpio.c</FilePath>
+              <FilePath>..\H23R0\H23R0_gpio.c</FilePath>
             </File>
             <File>
-              <FileName>H02R0_it.c</FileName>
+              <FileName>H23R0_it.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\H02R0\H02R0_it.c</FilePath>
+              <FilePath>..\H23R0\H23R0_it.c</FilePath>
             </File>
             <File>
-              <FileName>H02R0_uart.c</FileName>
+              <FileName>H23R0_uart.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\H02R0\H02R0_uart.c</FilePath>
+              <FilePath>..\H23R0\H23R0_uart.c</FilePath>
             </File>
           </Files>
         </Group>
@@ -597,7 +597,7 @@
             <File>
               <FileName>startup_stm32f091xc.s</FileName>
               <FileType>2</FileType>
-              <FilePath>..\H02R0\startup_stm32f091xc.s</FilePath>
+              <FilePath>..\H23R0\startup_stm32f091xc.s</FilePath>
             </File>
           </Files>
         </Group>

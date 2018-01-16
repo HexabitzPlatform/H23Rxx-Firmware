@@ -39,23 +39,23 @@
 //Max length message that can send to MCU
 #define MAX_MESSAGE_SIZE                  50
 // define code send command to MCU
-#define CODE_H02R0_GET_INFO               200
-#define CODE_H02R0_OTA_MODE               201
-#define CODE_H02R0_RUN_MODE               202
-#define CODE_H02R0_VSP_COMMAND_MODE       203
-#define CODE_H02R0_VSP_BRIDGE_MODE        204
-#define CODE_H02R0_SPP_MODE               205
-#define CODE_H02R0_LED_STATUS_ON          206
-#define CODE_H02R0_LED_STATUS_OFF         207
-#define CODE_H02R0_BTC_DEL_ALL_DATA_SEG   208
-#define CODE_H02R0_EVBTC_SPPCONN          209
-#define CODE_H02R0_EVBTC_SPPDISCON        210
-#define CODE_H02R0_EVBTC_PAIR_REQUEST     211
-#define CODE_H02R0_EVBTC_PIN_REQUEST      212
-#define CODE_H02R0_EVBTC_PAIR_RESULT      213
-#define CODE_H02R0_EVBTC_AUTHREQ          214
-#define CODE_H02R0_EVBTC_PASSKEY          215
-#define CODE_H02R0_SHOW_DEBUG_INFO        216
+#define CODE_H23R0_GET_INFO               200
+#define CODE_H23R0_OTA_MODE               201
+#define CODE_H23R0_RUN_MODE               202
+#define CODE_H23R0_VSP_COMMAND_MODE       203
+#define CODE_H23R0_VSP_BRIDGE_MODE        204
+#define CODE_H23R0_SPP_MODE               205
+#define CODE_H23R0_LED_STATUS_ON          206
+#define CODE_H23R0_LED_STATUS_OFF         207
+#define CODE_H23R0_BTC_DEL_ALL_DATA_SEG   208
+#define CODE_H23R0_EVBTC_SPPCONN          209
+#define CODE_H23R0_EVBTC_SPPDISCON        210
+#define CODE_H23R0_EVBTC_PAIR_REQUEST     211
+#define CODE_H23R0_EVBTC_PIN_REQUEST      212
+#define CODE_H23R0_EVBTC_PAIR_RESULT      213
+#define CODE_H23R0_EVBTC_AUTHREQ          214
+#define CODE_H23R0_EVBTC_PASSKEY          215
+#define CODE_H23R0_SHOW_DEBUG_INFO        216
 
 
 //******************************************************************************

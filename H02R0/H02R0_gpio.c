@@ -1,6 +1,6 @@
 /**
   ******************************************************************************
-  * File Name          : H02R0_gpio.c
+  * File Name          : H23R0_gpio.c
   * Description        : This file provides code for the configuration
   *                      of all used GPIO pins.
   ******************************************************************************
@@ -54,16 +54,16 @@ void MX_GPIO_Init(void)
   __GPIOD_CLK_ENABLE();
 	__GPIOB_CLK_ENABLE();
 	__GPIOF_CLK_ENABLE();		// for HSE and Boot0
-	
+
 	IND_LED_Init();
 }
 
-/* --- Configure indicator LED --- 
+/* --- Configure indicator LED ---
 */
 void IND_LED_Init(void)
 {
 	GPIO_InitTypeDef GPIO_InitStruct;
-	
+
 	GPIO_InitStruct.Pin = _IND_LED_PIN;
 	GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
 	GPIO_InitStruct.Pull = GPIO_NOPULL;
@@ -72,12 +72,12 @@ void IND_LED_Init(void)
 }
 
 
-/* --- Configure BT800 EN_RST / BT900 RST GPO --- 
+/* --- Configure BT800 EN_RST / BT900 RST GPO ---
 */
 void BT_RST_GPIO_Init(void)
 {
 	GPIO_InitTypeDef GPIO_InitStruct;
-	
+
 	GPIO_InitStruct.Pin = _BT_RST_PIN;
 	GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
 	GPIO_InitStruct.Pull = GPIO_NOPULL;
@@ -86,12 +86,12 @@ void BT_RST_GPIO_Init(void)
 }
 
 #ifdef H02R1
-/* --- Configure BT900 VSP Command Mode GPO --- 
+/* --- Configure BT900 VSP Command Mode GPO ---
 */
 void BT_VSP_GPIO_Init(void)
 {
 	GPIO_InitTypeDef GPIO_InitStruct;
-	
+
 	GPIO_InitStruct.Pin = _BT_VSP_PIN;
 	GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
 	GPIO_InitStruct.Pull = GPIO_NOPULL;
@@ -99,12 +99,12 @@ void BT_VSP_GPIO_Init(void)
 	HAL_GPIO_Init(_BT_VSP_PORT, &GPIO_InitStruct);
 }
 
-/* --- Configure BT900 Module Mode GPO --- 
+/* --- Configure BT900 Module Mode GPO ---
 */
 void BT_MODE_GPIO_Init(void)
 {
 	GPIO_InitTypeDef GPIO_InitStruct;
-	
+
 	GPIO_InitStruct.Pin = _BT_MODE_PIN;
 	GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
 	GPIO_InitStruct.Pull = GPIO_NOPULL;
@@ -113,7 +113,7 @@ void BT_MODE_GPIO_Init(void)
 }
 
 /* --- CTS pin ---
- *	USART3 GPIO Configuration    
+ *	USART3 GPIO Configuration
  *	PA6     ------> USART3_CTS
  *	PB1     ------> USART3_RTS
 */
@@ -136,12 +136,12 @@ void BT_CTS_RTS_GPIO_Init(void)
 	HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 }
 
-/* --- Configure BT900 Host Wakeup GPI --- 
+/* --- Configure BT900 Host Wakeup GPI ---
 */
 void BT_HOST_WKUP_GPIO_Init(void)
 {
 	GPIO_InitTypeDef GPIO_InitStruct;
-	
+
 	GPIO_InitStruct.Pin = _BT_HOST_WKUP_PIN;
 	GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
 	GPIO_InitStruct.Pull = GPIO_NOPULL;

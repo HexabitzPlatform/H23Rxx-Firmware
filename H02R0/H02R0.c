@@ -2,8 +2,8 @@
     BitzOS (BOS) V0.0.0 - Copyright (C) 2016 Hexabitz
     All rights reserved
 
-    File Name     : H02R0.c
-    Description   : Source code for module H02R0.
+    File Name     : H23R0.c
+    Description   : Source code for module H23R0.
 										Bluetooth module (BT800/BT900)
 
 		Required MCU resources :
@@ -113,7 +113,7 @@ const CLI_Command_Definition_t btSetBaudrateCommandDefinition =
    -----------------------------------------------------------------------
 */
 
-/* --- H02R0 module initialization.
+/* --- H23R0 module initialization.
 */
 void Module_Init(void)
 {
@@ -171,36 +171,36 @@ void ControlBluetoothTask(void * argument)
     code_field += (cMessage[PORT_BTC_CONN-1][2] - 0x30) * 100;
     switch(code_field)
     {
-      case CODE_H02R0_EVBTC_SPPCONN:
+      case CODE_H23R0_EVBTC_SPPCONN:
         break;
 
-      case CODE_H02R0_EVBTC_SPPDISCON:
+      case CODE_H23R0_EVBTC_SPPDISCON:
         break;
 
-      case CODE_H02R0_EVBTC_PAIR_REQUEST:
+      case CODE_H23R0_EVBTC_PAIR_REQUEST:
         break;
 
-      case CODE_H02R0_EVBTC_PIN_REQUEST:
+      case CODE_H23R0_EVBTC_PIN_REQUEST:
         break;
 
-      case CODE_H02R0_EVBTC_PAIR_RESULT:
+      case CODE_H23R0_EVBTC_PAIR_RESULT:
         break;
 
-      case CODE_H02R0_EVBTC_AUTHREQ:
+      case CODE_H23R0_EVBTC_AUTHREQ:
         break;
 
-      case CODE_H02R0_EVBTC_PASSKEY:
+      case CODE_H23R0_EVBTC_PASSKEY:
         break;
 
-      case CODE_H02R0_LED_STATUS_ON:
+      case CODE_H23R0_LED_STATUS_ON:
         IND_ON();
         break;
 
-      case CODE_H02R0_LED_STATUS_OFF:
+      case CODE_H23R0_LED_STATUS_OFF:
         IND_OFF();
         break;
 
-      case CODE_H02R0_SHOW_DEBUG_INFO:
+      case CODE_H23R0_SHOW_DEBUG_INFO:
 				memcpy(tMessage, cMessage[PORT_BTC_CONN-1], (size_t)messageLength[PORT_BTC_CONN-1]);
 				btShowMsgOnTerminal((uint8_t *)"\r\n", tMessage);
         break;
@@ -228,43 +228,43 @@ void ControlBluetoothTask(void * argument)
 
 /*-----------------------------------------------------------*/
 
-/* --- H02R0 message processing task
+/* --- H23R0 message processing task
 */
 Module_Status Module_MessagingTask(uint16_t code, uint8_t port, uint8_t src, uint8_t dst)
 {
-	Module_Status result = H02R0_OK;
+	Module_Status result = H23R0_OK;
 
 	switch (code)
 	{
-		case CODE_H02R0_GET_INFO:
+		case CODE_H23R0_GET_INFO:
 			break;
 
-		case CODE_H02R0_OTA_MODE:
+		case CODE_H23R0_OTA_MODE:
 			btUpdateScript();
 			break;
 
-		case CODE_H02R0_RUN_MODE:
+		case CODE_H23R0_RUN_MODE:
 			btRunScript();
 			break;
 
-		case CODE_H02R0_VSP_COMMAND_MODE:
-			btVspMode(H02R0_RUN_VspCommandMode);
+		case CODE_H23R0_VSP_COMMAND_MODE:
+			btVspMode(H23R0_RUN_VspCommandMode);
 			break;
 
-		case CODE_H02R0_VSP_BRIDGE_MODE:
-			btVspMode(H02R0_RUN_VspBridgeToUartMode);
+		case CODE_H23R0_VSP_BRIDGE_MODE:
+			btVspMode(H23R0_RUN_VspBridgeToUartMode);
 			break;
 
-		case CODE_H02R0_LED_STATUS_ON:
+		case CODE_H23R0_LED_STATUS_ON:
 			IND_ON();
 			break;
 
-		case CODE_H02R0_LED_STATUS_OFF:
+		case CODE_H23R0_LED_STATUS_OFF:
 			IND_OFF();
       break;
 
 		default:
-			result = H02R0_ERR_UnknownMessage;
+			result = H23R0_ERR_UnknownMessage;
 			break;
 	}
 
@@ -309,8 +309,8 @@ void btDisableHandshakeUart(void)
 */
 void btSendMsgToTerminal(uint8_t *pStr)
 {
-  #if (H02R0_SHOW_DEBUG_INFO_TERMINAL == H02R0_ENABLE_DEBUG_BTC)
-	writePxMutex( H02R0_UART_DEBUG_PORT,
+  #if (H23R0_SHOW_DEBUG_INFO_TERMINAL == H23R0_ENABLE_DEBUG_BTC)
+	writePxMutex( H23R0_UART_DEBUG_PORT,
                 (char *) pStr,
                 strlen((char *) pStr),
                 cmd50ms,
@@ -384,17 +384,17 @@ void btRunScript(void)
 */
 Module_Status btVspMode(int8_t inputVspMode)
 {
-	Module_Status result = H02R0_OK;
+	Module_Status result = H23R0_OK;
 
 	btEnableHandshakeUart();
 	//UpdateBaudrate(PORT_BTC_CONN, 115200); /* default baudrate of BT900 */
-	if (H02R0_RUN_VspCommandMode == inputVspMode)
+	if (H23R0_RUN_VspCommandMode == inputVspMode)
 	{
 		BT_CLEAR_VSP_PIN();
 		BT_CLEAR_MODE_PIN();
 		btResetBt900Module();
 	}
-	else if (H02R0_RUN_VspBridgeToUartMode == inputVspMode)
+	else if (H23R0_RUN_VspBridgeToUartMode == inputVspMode)
 	{
 		BT_CLEAR_VSP_PIN();
 		BT_SET_MODE_PIN();
@@ -402,7 +402,7 @@ Module_Status btVspMode(int8_t inputVspMode)
 	}
 	else
 	{
-		result = H02R0_ERR_WrongParams;
+		result = H23R0_ERR_WrongParams;
 	}
 	return result;
 }
@@ -495,7 +495,7 @@ static portBASE_TYPE btRunScriptCommand( int8_t *pcWriteBuffer, size_t xWriteBuf
 
 static portBASE_TYPE btVspModeCommand( int8_t *pcWriteBuffer, size_t xWriteBufferLen, const int8_t *pcCommandString )
 {
-	Module_Status result = H02R0_OK;
+	Module_Status result = H23R0_OK;
 
 	int8_t *pcParameterString1;
 	portBASE_TYPE xParameterStringLength1 = 0;
@@ -512,21 +512,21 @@ static portBASE_TYPE btVspModeCommand( int8_t *pcWriteBuffer, size_t xWriteBuffe
 	pcParameterString1 = ( int8_t * ) FreeRTOS_CLIGetParameter (pcCommandString, 1, &xParameterStringLength1);
 	if (!strncmp((const char *)pcParameterString1, "command", 7))
 	{
-		result = btVspMode(H02R0_RUN_VspCommandMode);
+		result = btVspMode(H23R0_RUN_VspCommandMode);
 		sprintf( ( char * ) pcWriteBuffer, ( char * ) pcMessageOK, "VSP command mode\r\n");
 	}
 	else if (!strncmp((const char *)pcParameterString1, "bridge", 11))
 	{
-		result = btVspMode(H02R0_RUN_VspBridgeToUartMode);
+		result = btVspMode(H23R0_RUN_VspBridgeToUartMode);
 		sprintf( ( char * ) pcWriteBuffer, ( char * ) pcMessageOK, "VSP Bridge-to-UART mode\r\n");
 	}
 	else
 	{
-		result = H02R0_ERR_WrongParams;
+		result = H23R0_ERR_WrongParams;
 	}
 
 	/* Respond to the command */
-	if (H02R0_ERR_WrongParams == result)
+	if (H23R0_ERR_WrongParams == result)
 	{
 		strcpy( ( char * ) pcWriteBuffer, ( char * ) pcMessageWrongParam );
 	}
@@ -537,7 +537,7 @@ static portBASE_TYPE btVspModeCommand( int8_t *pcWriteBuffer, size_t xWriteBuffe
 
 static portBASE_TYPE btSetBaudrateCommand( int8_t *pcWriteBuffer, size_t xWriteBufferLen, const int8_t *pcCommandString )
 {
-	Module_Status result = H02R0_OK;
+	Module_Status result = H23R0_OK;
 
 	int8_t *pcParameterString1;
 	portBASE_TYPE xParameterStringLength1 = 0;
@@ -564,11 +564,11 @@ static portBASE_TYPE btSetBaudrateCommand( int8_t *pcWriteBuffer, size_t xWriteB
 	}
 	else
 	{
-		result = H02R0_ERR_WrongParams;
+		result = H23R0_ERR_WrongParams;
 	}
 
 	/* Respond to the command */
-	if (H02R0_ERR_WrongParams == result)
+	if (H23R0_ERR_WrongParams == result)
 	{
 		strcpy( ( char * ) pcWriteBuffer, ( char * ) pcMessageWrongParam );
 	}
