@@ -33,8 +33,8 @@
 #define BTC_ADDR                        "001A7DDA7113" // my window pc
 
 
-#define BTC_SET_DISCOVERABLE            1
-#define BTC_SET_CONNECTABLE		1
+#define BTC_SET_DISCOVERABLE              1
+#define BTC_SET_CONNECTABLE		            1
 
 //Max length message that can send to MCU
 #define MAX_MESSAGE_SIZE                  50
@@ -56,7 +56,13 @@
 #define CODE_H23R0_EVBTC_AUTHREQ          2314
 #define CODE_H23R0_EVBTC_PASSKEY          2315
 #define CODE_H23R0_SHOW_DEBUG_INFO        2316
+#define CODE_H23R0_SCAN_INFO              2317
+#define CODE_H23R0_CONNECT                2318
 
+
+#define BTC_SCAN_NUMBER_DEVICES           10
+#define BTC_APP_INQ_NAME_DEVICES          100
+#define BTC_APP_CMD_SETTING_BT900         101
 
 //******************************************************************************
 // Library Import
@@ -67,16 +73,18 @@
 //******************************************************************************
 
 DIM rc
-// led's variable
-DIM valueLedBt : valueLedBt = 0
-DIM numberBlinkLed : numberBlinkLed = 0
-DIM delayMsLedBt : delayMsLedBt = 0
-DIM periodMsLedBt : periodMsLedBt = 0
+DIM IndexInqScan
+DIM IndexGetName
+DIM Addr$[BTC_SCAN_NUMBER_DEVICES]
+DIM Rssi[BTC_SCAN_NUMBER_DEVICES]
 
 DIM StreamUartHandle
 DIM StreamSPPHandle
 DIM SPPHandleConnection
 DIM StreamBridgeHandle
+
+// string for receive
+DIM MsgCommandReceive$
 
 //******************************************************************************
 // Function and Subroutine definitions
@@ -134,7 +142,7 @@ SUB SendMsgInfoToMcu(code, parameter$)
   DIM strCommand$
   DIM _strCode$
 
-  lenStr = StrLen(parameter$) + 3 + 2
+  lenStr = StrLen(parameter$) + 4 + 2
   SPRINT #_strCode$ , code
   SPRINT #_lenStr$ , lenStr
   strCommand$ = _lenStr$ + _strCode$ + parameter$
@@ -222,16 +230,16 @@ SUB OnStartup()
   AssertRC(rc, 8)
 
   // Set inquiry
-  //rc = BtcInquiryConfig(0, 0)   // Inquiry Type: General Inquiry
-  //AssertRC(rc, 9)
-  //rc = BtcInquiryConfig(1, 2)   // Inquiry Mode: Extended
-  //AssertRC(rc, 10)
-  //rc = BtcInquiryConfig(2, 100) // Max number of inquiry responses to receive
-  //AssertRC(rc, 11)
+  rc = BtcInquiryConfig(0, 0)   // Inquiry Type: General Inquiry
+  AssertRC(rc, 9)
+  rc = BtcInquiryConfig(1, 1)   // Inquiry Mode: RSSI
+  AssertRC(rc, 10)
+  rc = BtcInquiryConfig(2, BTC_SCAN_NUMBER_DEVICES) // Max number of inquiry responses to receive
+  AssertRC(rc, 11)
 
   // Start inquiry
-  //rc = BtcInquiryStart(10) // time out in seconds
-  //AssertRC(rc, 12)
+  rc = BtcInquiryStart(10) // time out in seconds
+  AssertRC(rc, 12)
 
   //tempBtcAddr$ = BTC_ADDR
   //rc = BtcPair(tempBtcAddr$, 2)
@@ -259,10 +267,52 @@ SUB CloseConnections()
 ENDSUB
 
 FUNCTION HandlerInqResp(respType)
+  DIM inqData$
+  DIM nDiscarded
+  DIM tAddr$
+  DIM tRssi
+
+  // Get information of remote bluetooth devices
+  //BtcInquiryGetReportFull()
+  rc = BtcInquiryGetReport(tAddr$, inqData$, nDiscarded, tRssi)
+  IF ( (1 == respType) && (IndexInqScan < BTC_SCAN_NUMBER_DEVICES) ) THEN
+  //IF (IndexInqScan < BTC_SCAN_NUMBER_DEVICES) THEN
+    Addr$[IndexInqScan] = tAddr$
+    Rssi[IndexInqScan] = tRssi
+    IndexInqScan = IndexInqScan + 1
+  ENDIF // 1 == respType
 ENDFUNC 1
 
 FUNCTION BtcTimeOutHeadler()
-  BlinkLed(10, 250) // number of blink: 10; time delay: 250
+
+  BlinkLed(10, 50) // number of blink: 10; time delay: 50
+  IndexGetName = 0
+  IF (6 == StrLen(Addr$[IndexGetName])) THEN
+    rc = BtcQueryRemoteFriendlyName(Addr$[IndexGetName])
+  ENDIF // 6 == StrLen(Addr$[IndexGetName])
+ENDFUNC 1
+
+FUNCTION HandlerGetRemoteName(nStatus)
+  DIM remoteNameDevice$
+  DIM tAddr$
+  DIM tStatus
+  DIM _tIndex$
+  DIM _tRssi$
+  DIM strTemp$
+
+  rc = BtcGetRemoteFriendlyName(remoteNameDevice$, tAddr$, tStatus)
+  IF (0 == nStatus) THEN
+    SPRINT #_tIndex$, IndexGetName
+    SPRINT #_tRssi$, Rssi[IndexGetName]
+    // strTemp$ = "[" + _tIndex$ +"]"+"\t"+ Addr$[IndexGetName] +"\t"+ remoteNameDevice$ +"\t"+ _tRssi$
+    // PRINT strTemp$ // debug info
+    strTemp$ = "[" + _tIndex$ +"]"+"\t"+ remoteNameDevice$ +"\t"+ _tRssi$
+    SendMsgInfoToMcu(CODE_H23R0_SCAN, strTemp$)
+    IndexGetName = IndexGetName + 1
+    IF (IndexGetName <= IndexInqScan) THEN
+      rc = BtcQueryRemoteFriendlyName(Addr$[IndexGetName])
+    ENDIF
+  ENDIF // 0 == nStatus
 ENDFUNC 1
 
 FUNCTION HandlerPairReq()
@@ -305,22 +355,59 @@ FUNCTION HandlerSppDataRx()
 ENDFUNC 1
 
 FUNCTION HandlerUartRx()
+  DIM character$
+  DIM charHex
+  DIM lenStr
+  DIM crcStr$ : crcStr$ = "75"
+
+  // check CRC code
+  //lenStr = UartRead(character$)
+  //charHex = STRHEXIZE$(character$)
+  //IF (0 != lenStr)
+    //IF (!(strCmp(crcStr$, character$))
+      // end of message send to bluetooth  module
+      //SPRINT #MsgCommandReceive$, character$
+    //ELSE
+    //ENDIF
+  //ENDIF
+
 ENDFUNC 1
+
+FUNCTION CallMsgApp(msgID, cmd)
+  //IF (BTC_APP_INQ_NAME_DEVICES == msgID) THEN
+    // 
+  //ELSEIF (BTC_APP_CMD_SETTING_BT900 == msgID) THEN
+    // command
+  //ENDIF
+ENDFUNC 1
+
+SUB CleanBtcData()
+  DIM index
+
+  FOR index = 0 TO IndexInqScan
+    Addr$[index] = ""
+    Rssi[index] = 0
+  NEXT
+  IndexGetName = 0
+  IndexInqScan = 0
+ENDSUB
 
 //******************************************************************************
 // Equivalent to main() in C
 //******************************************************************************
 
-ONEVENT EVINQRESP               CALL HandlerInqResp
-ONEVENT EVBTC_INQUIRY_TIMEOUT   CALL BtcTimeOutHeadler
-ONEVENT EVBTC_PAIR_REQUEST      CALL HandlerPairReq
-ONEVENT EVBTC_PIN_REQUEST       CALL HandlerPINReq
-ONEVENT EVBTC_PAIR_RESULT       CALL HandlerPairRes
-ONEVENT EVSPPCONN               CALL SppConnect
-ONEVENT EVUARTRX                CALL HandlerUartRx
-ONEVENT EVBTC_SPP_DATA_RECEIVED CALL HandlerSppDataRx
+ONEVENT EVINQRESP                   CALL HandlerInqResp
+ONEVENT EVBTC_INQUIRY_TIMEOUT       CALL BtcTimeOutHeadler
+ONEVENT EVBTC_PAIR_REQUEST          CALL HandlerPairReq
+ONEVENT EVBTC_PIN_REQUEST           CALL HandlerPINReq
+ONEVENT EVBTC_PAIR_RESULT           CALL HandlerPairRes
+ONEVENT EVSPPCONN                   CALL SppConnect
+ONEVENT EVUARTRX                    CALL HandlerUartRx
+ONEVENT EVBTC_SPP_DATA_RECEIVED     CALL HandlerSppDataRx
+ONEVENT EVBTC_REMOTENAME_RECEIVED   CALL HandlerGetRemoteName
+ONEVENT EVMSGAPP                    CALL CallMsgApp
 
-
+CleanBtcData()
 OnStartup()
 IF 0 == rc THEN
   BlinkLed(1, 500)

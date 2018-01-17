@@ -167,26 +167,25 @@ extern TaskHandle_t ControlBluetoothTaskHandle;
    -----------------------------------------------------------------------
 */
 
-#define	CODE_H23R0_GET_INFO								2300
-#define	CODE_H23R0_OTA_MODE								2301
-#define	CODE_H23R0_RUN_MODE								2302
-#define	CODE_H23R0_VSP_COMMAND_MODE				2303
-#define	CODE_H23R0_VSP_BRIDGE_MODE				2304
-#define	CODE_H23R0_SPP_MODE								2305
-#define CODE_H23R0_LED_STATUS_ON					2306
-#define CODE_H23R0_LED_STATUS_OFF					2307
-
-#define CODE_H23R0_BTC_DEL_ALL_DATA_SEG		2308
-
-#define CODE_H23R0_EVBTC_SPPCONN					2309
-#define CODE_H23R0_EVBTC_SPPDISCON				2310
-#define CODE_H23R0_EVBTC_PAIR_REQUEST			2311
-#define CODE_H23R0_EVBTC_PIN_REQUEST			2312
-#define CODE_H23R0_EVBTC_PAIR_RESULT			2313
-#define CODE_H23R0_EVBTC_AUTHREQ					2314
-#define CODE_H23R0_EVBTC_PASSKEY					2315
-#define CODE_H23R0_SHOW_DEBUG_INFO				2316
-
+#define CODE_H23R0_GET_INFO               2300
+#define CODE_H23R0_OTA_MODE               2301
+#define CODE_H23R0_RUN_MODE               2302
+#define CODE_H23R0_VSP_COMMAND_MODE       2303
+#define CODE_H23R0_VSP_BRIDGE_MODE        2304
+#define CODE_H23R0_SPP_MODE               2305
+#define CODE_H23R0_LED_STATUS_ON          2306
+#define CODE_H23R0_LED_STATUS_OFF         2307
+#define CODE_H23R0_BTC_DEL_ALL_DATA_SEG   2308
+#define CODE_H23R0_EVBTC_SPPCONN          2309
+#define CODE_H23R0_EVBTC_SPPDISCON        2310
+#define CODE_H23R0_EVBTC_PAIR_REQUEST     2311
+#define CODE_H23R0_EVBTC_PIN_REQUEST      2312
+#define CODE_H23R0_EVBTC_PAIR_RESULT      2313
+#define CODE_H23R0_EVBTC_AUTHREQ          2314
+#define CODE_H23R0_EVBTC_PASSKEY          2315
+#define CODE_H23R0_SHOW_DEBUG_INFO        2316
+#define CODE_H23R0_SCAN_INFO              2317
+#define CODE_H23R0_CONNECT                2318
 
 /* -----------------------------------------------------------------------
 	|																APIs	 																 	|

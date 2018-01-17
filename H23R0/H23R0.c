@@ -60,6 +60,8 @@ static portBASE_TYPE btUpdateScriptCommand( int8_t *pcWriteBuffer, size_t xWrite
 static portBASE_TYPE btRunScriptCommand( int8_t *pcWriteBuffer, size_t xWriteBufferLen, const int8_t *pcCommandString );
 static portBASE_TYPE btVspModeCommand( int8_t *pcWriteBuffer, size_t xWriteBufferLen, const int8_t *pcCommandString );
 static portBASE_TYPE btSetBaudrateCommand( int8_t *pcWriteBuffer, size_t xWriteBufferLen, const int8_t *pcCommandString );
+static portBASE_TYPE btScanCommand( int8_t *pcWriteBuffer, size_t xWriteBufferLen, const int8_t *pcCommandString );
+static portBASE_TYPE btConnectCommand( int8_t *pcWriteBuffer, size_t xWriteBufferLen, const int8_t *pcCommandString );
 
 /* CLI command structure : bt-info */
 const CLI_Command_Definition_t btGetInfoCommandDefinition =
@@ -103,6 +105,24 @@ const CLI_Command_Definition_t btSetBaudrateCommandDefinition =
 	( const int8_t * ) "bt-set-baudrate", /* The command string to type. */
 	( const int8_t * ) "bt-set-baudrate:\r\n Set connection speed between MCU and Bluetooth module \r\n\r\n",
 	btSetBaudrateCommand, /* The function to run. */
+	1 /* One parameter is expected. */
+};
+
+/* CLI command structure : scan */
+const CLI_Command_Definition_t btScanCommandDefinition =
+{
+	( const int8_t * ) "scan", /* The command string to type. */
+	( const int8_t * ) "scan:\r\n Scan nearby ble devices and display them in a list along with their SSIDs and RSSI levels\r\n\r\n",
+	btScanCommand, /* The function to run. */
+	0 /* One parameter is expected. */
+};
+
+/* CLI command structure : connect */
+const CLI_Command_Definition_t btConnectCommandDefinition =
+{
+	( const int8_t * ) "connect", /* The command string to type. */
+	( const int8_t * ) "connect:\r\n Set connection with other bluetooth device \r\n\r\n",
+	btConnectCommand, /* The function to run. */
 	1 /* One parameter is expected. */
 };
 
@@ -201,8 +221,19 @@ void ControlBluetoothTask(void * argument)
         break;
 
       case CODE_H23R0_SHOW_DEBUG_INFO:
-				memcpy(tMessage, cMessage[PORT_BTC_CONN-1], (size_t)messageLength[PORT_BTC_CONN-1]);
-				btShowMsgOnTerminal((uint8_t *)"\r\n", tMessage);
+				/* Copy the generated string to messageParams */
+				memcpy(messageParams, &cMessage[PORT_BTC_CONN-1][5], (size_t)(messageLength[PORT_BTC_CONN-1]-6));
+				/* Send command response */
+				SendMessageToModule(myID, CODE_CLI_response, (size_t)(messageLength[PORT_BTC_CONN-1]-6));
+				osDelay(10); 
+        break;
+
+      case CODE_H23R0_SCAN_INFO:
+				/* Copy the generated string to messageParams */
+				memcpy(messageParams, &cMessage[PORT_BTC_CONN-1][5], (size_t)(messageLength[PORT_BTC_CONN-1]-6));
+				/* Send command response */
+				SendMessageToModule(myID, CODE_CLI_response, (size_t)(messageLength[PORT_BTC_CONN-1]-6));
+				osDelay(10);
         break;
 
       default:
@@ -281,6 +312,8 @@ void RegisterModuleCLICommands(void)
 	FreeRTOS_CLIRegisterCommand( &btRunScriptCommandDefinition);
 	FreeRTOS_CLIRegisterCommand( &btVspModeCommandDefinition);
 	FreeRTOS_CLIRegisterCommand( &btSetBaudrateCommandDefinition);
+	FreeRTOS_CLIRegisterCommand( &btScanCommandDefinition);
+	FreeRTOS_CLIRegisterCommand( &btConnectCommandDefinition);
 }
 
 /*-----------------------------------------------------------*/
@@ -572,6 +605,40 @@ static portBASE_TYPE btSetBaudrateCommand( int8_t *pcWriteBuffer, size_t xWriteB
 	{
 		strcpy( ( char * ) pcWriteBuffer, ( char * ) pcMessageWrongParam );
 	}
+
+	/* There is no more data to return after this single string, so return pdFALSE. */
+	return pdFALSE;
+}
+
+static portBASE_TYPE btScanCommand( int8_t *pcWriteBuffer, size_t xWriteBufferLen, const int8_t *pcCommandString )
+{
+	/* Remove compile time warnings about unused parameters, and check the
+	write buffer is not NULL.  NOTE - for simplicity, this example assumes the
+	write buffer length is adequate, so does not check for buffer overflows. */
+	( void ) pcCommandString;
+	( void ) xWriteBufferLen;
+	configASSERT( pcWriteBuffer );
+
+	/* Scan */
+
+	/* sprintf( ( char * ) pcWriteBuffer, "Get information from BT900 module\r\n"); */
+
+	/* There is no more data to return after this single string, so return pdFALSE. */
+	return pdFALSE;
+}
+
+static portBASE_TYPE btConnectCommand( int8_t *pcWriteBuffer, size_t xWriteBufferLen, const int8_t *pcCommandString )
+{
+	/* Remove compile time warnings about unused parameters, and check the
+	write buffer is not NULL.  NOTE - for simplicity, this example assumes the
+	write buffer length is adequate, so does not check for buffer overflows. */
+	( void ) pcCommandString;
+	( void ) xWriteBufferLen;
+	configASSERT( pcWriteBuffer );
+
+	/* Connect */
+
+	/* sprintf( ( char * ) pcWriteBuffer, "Get information from BT900 module\r\n"); */
 
 	/* There is no more data to return after this single string, so return pdFALSE. */
 	return pdFALSE;
