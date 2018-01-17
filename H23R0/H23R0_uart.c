@@ -1,6 +1,6 @@
 /**
   ******************************************************************************
-  * File Name          : H02R0_uart.c
+  * File Name          : H23R0_uart.c
   * Description        : This file provides code for the configuration
   *                      of the USART instances.
   ******************************************************************************
@@ -31,7 +31,7 @@
   *
   ******************************************************************************
   */
-	
+
 /*
 		MODIFIED by Hexabitz for BitzOS (BOS) V0.0.0 - Copyright (C) 2016 Hexabitz
     All rights reserved
@@ -64,7 +64,7 @@ void MX_USART1_UART_Init(void)
 		huart1.AdvancedInit.AdvFeatureInit = UART_ADVFEATURE_SWAP_INIT;
 		huart1.AdvancedInit.Swap = UART_ADVFEATURE_SWAP_ENABLE;
 	  HAL_UART_Init(&huart1);
-	#endif	
+	#endif
 }
 #endif
 
@@ -87,7 +87,7 @@ void MX_USART2_UART_Init(void)
 		huart2.AdvancedInit.AdvFeatureInit = UART_ADVFEATURE_SWAP_INIT;
 		huart2.AdvancedInit.Swap = UART_ADVFEATURE_SWAP_ENABLE;
 	  HAL_UART_Init(&huart2);
-	#endif	
+	#endif
 }
 #endif
 
@@ -110,7 +110,7 @@ void MX_USART3_UART_Init(void)
 		huart3.AdvancedInit.AdvFeatureInit = UART_ADVFEATURE_SWAP_INIT;
 		huart3.AdvancedInit.Swap = UART_ADVFEATURE_SWAP_ENABLE;
 	  HAL_UART_Init(&huart3);
-	#endif	
+	#endif
 }
 #endif
 
@@ -129,11 +129,11 @@ void MX_USART4_UART_Init(void)
   huart4.Init.OneBitSampling = UART_ONEBIT_SAMPLING_DISABLED;
   huart4.AdvancedInit.AdvFeatureInit = UART_ADVFEATURE_NO_INIT;
 	HAL_UART_Init(&huart4);
-	#if _P1pol_reversed	
+	#if _P1pol_reversed
 		huart4.AdvancedInit.AdvFeatureInit = UART_ADVFEATURE_SWAP_INIT;
 		huart4.AdvancedInit.Swap = UART_ADVFEATURE_SWAP_ENABLE;
 	  HAL_UART_Init(&huart4);
-	#endif	
+	#endif
 }
 #endif
 
@@ -152,11 +152,11 @@ void MX_USART5_UART_Init(void)
   huart5.Init.OneBitSampling = UART_ONEBIT_SAMPLING_DISABLED;
   huart5.AdvancedInit.AdvFeatureInit = UART_ADVFEATURE_NO_INIT;
 	HAL_UART_Init(&huart5);
-	#if _P5pol_reversed	
+	#if _P5pol_reversed
 		huart5.AdvancedInit.AdvFeatureInit = UART_ADVFEATURE_SWAP_INIT;
 		huart5.AdvancedInit.Swap = UART_ADVFEATURE_SWAP_ENABLE;
 	  HAL_UART_Init(&huart5);
-	#endif	
+	#endif
 }
 #endif
 
@@ -179,7 +179,7 @@ void MX_USART6_UART_Init(void)
 		huart6.AdvancedInit.AdvFeatureInit = UART_ADVFEATURE_SWAP_INIT;
 		huart6.AdvancedInit.Swap = UART_ADVFEATURE_SWAP_ENABLE;
 	  HAL_UART_Init(&huart6);
-	#endif	
+	#endif
 }
 #endif
 
@@ -192,16 +192,16 @@ void HAL_UART_MspInit(UART_HandleTypeDef* huart)
 	#ifdef _Usart1
     /* Peripheral clock enable */
     __USART1_CLK_ENABLE();
-  
+
     /* USART1 GPIO Configuration */
-    GPIO_InitStruct.Pin = USART1_TX_PIN; 
+    GPIO_InitStruct.Pin = USART1_TX_PIN;
     GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
     GPIO_InitStruct.Pull = GPIO_PULLUP;
     GPIO_InitStruct.Speed = GPIO_SPEED_HIGH;
-    GPIO_InitStruct.Alternate = USART1_AF;	
+    GPIO_InitStruct.Alternate = USART1_AF;
     HAL_GPIO_Init(USART1_TX_PORT, &GPIO_InitStruct);
-		
-		GPIO_InitStruct.Pin = USART1_RX_PIN;  
+
+		GPIO_InitStruct.Pin = USART1_RX_PIN;
     GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
     GPIO_InitStruct.Pull = GPIO_PULLUP;
     GPIO_InitStruct.Speed = GPIO_SPEED_HIGH;
@@ -218,16 +218,16 @@ void HAL_UART_MspInit(UART_HandleTypeDef* huart)
 	#ifdef _Usart2
     /* Peripheral clock enable */
     __USART2_CLK_ENABLE();
-  
+
     /* USART2 GPIO Configuration */
-    GPIO_InitStruct.Pin = USART2_TX_PIN; 
+    GPIO_InitStruct.Pin = USART2_TX_PIN;
     GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
     GPIO_InitStruct.Pull = GPIO_PULLUP;
     GPIO_InitStruct.Speed = GPIO_SPEED_HIGH;
-    GPIO_InitStruct.Alternate = USART2_AF;	
+    GPIO_InitStruct.Alternate = USART2_AF;
     HAL_GPIO_Init(USART2_TX_PORT, &GPIO_InitStruct);
-		
-		GPIO_InitStruct.Pin = USART2_RX_PIN;  
+
+		GPIO_InitStruct.Pin = USART2_RX_PIN;
     GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
     GPIO_InitStruct.Pull = GPIO_PULLUP;
     GPIO_InitStruct.Speed = GPIO_SPEED_HIGH;
@@ -244,16 +244,16 @@ void HAL_UART_MspInit(UART_HandleTypeDef* huart)
 	#ifdef _Usart3
     /* Peripheral clock enable */
     __USART3_CLK_ENABLE();
-  
+
     /* USART3 GPIO Configuration */
-    GPIO_InitStruct.Pin = USART3_TX_PIN; 
+    GPIO_InitStruct.Pin = USART3_TX_PIN;
     GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
     GPIO_InitStruct.Pull = GPIO_PULLUP;
     GPIO_InitStruct.Speed = GPIO_SPEED_HIGH;
-    GPIO_InitStruct.Alternate = USART3_AF;	
+    GPIO_InitStruct.Alternate = USART3_AF;
     HAL_GPIO_Init(USART3_TX_PORT, &GPIO_InitStruct);
-		
-		GPIO_InitStruct.Pin = USART3_RX_PIN;  
+
+		GPIO_InitStruct.Pin = USART3_RX_PIN;
     GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
     GPIO_InitStruct.Pull = GPIO_PULLUP;
     GPIO_InitStruct.Speed = GPIO_SPEED_HIGH;
@@ -270,16 +270,16 @@ void HAL_UART_MspInit(UART_HandleTypeDef* huart)
 	#ifdef _Usart4
     /* Peripheral clock enable */
     __USART4_CLK_ENABLE();
-  
+
     /* USART4 GPIO Configuration */
-    GPIO_InitStruct.Pin = USART4_TX_PIN; 
+    GPIO_InitStruct.Pin = USART4_TX_PIN;
     GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
     GPIO_InitStruct.Pull = GPIO_PULLUP;
     GPIO_InitStruct.Speed = GPIO_SPEED_HIGH;
-    GPIO_InitStruct.Alternate = USART4_AF;	
+    GPIO_InitStruct.Alternate = USART4_AF;
     HAL_GPIO_Init(USART4_TX_PORT, &GPIO_InitStruct);
-		
-		GPIO_InitStruct.Pin = USART4_RX_PIN;  
+
+		GPIO_InitStruct.Pin = USART4_RX_PIN;
     GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
     GPIO_InitStruct.Pull = GPIO_PULLUP;
     GPIO_InitStruct.Speed = GPIO_SPEED_HIGH;
@@ -296,16 +296,16 @@ void HAL_UART_MspInit(UART_HandleTypeDef* huart)
 	#ifdef _Usart5
     /* Peripheral clock enable */
     __USART5_CLK_ENABLE();
-  
+
     /* USART5 GPIO Configuration */
-    GPIO_InitStruct.Pin = USART5_TX_PIN; 
+    GPIO_InitStruct.Pin = USART5_TX_PIN;
     GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
     GPIO_InitStruct.Pull = GPIO_PULLUP;
     GPIO_InitStruct.Speed = GPIO_SPEED_HIGH;
-    GPIO_InitStruct.Alternate = USART5_AF;	
+    GPIO_InitStruct.Alternate = USART5_AF;
     HAL_GPIO_Init(USART5_TX_PORT, &GPIO_InitStruct);
-		
-		GPIO_InitStruct.Pin = USART5_RX_PIN;  
+
+		GPIO_InitStruct.Pin = USART5_RX_PIN;
     GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
     GPIO_InitStruct.Pull = GPIO_PULLUP;
     GPIO_InitStruct.Speed = GPIO_SPEED_HIGH;
@@ -322,16 +322,16 @@ void HAL_UART_MspInit(UART_HandleTypeDef* huart)
 	#ifdef _Usart6
     /* Peripheral clock enable */
     __USART6_CLK_ENABLE();
-  
+
     /* USART6 GPIO Configuration */
-    GPIO_InitStruct.Pin = USART6_TX_PIN; 
+    GPIO_InitStruct.Pin = USART6_TX_PIN;
     GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
     GPIO_InitStruct.Pull = GPIO_PULLUP;
     GPIO_InitStruct.Speed = GPIO_SPEED_HIGH;
-    GPIO_InitStruct.Alternate = USART6_AF;	
+    GPIO_InitStruct.Alternate = USART6_AF;
     HAL_GPIO_Init(USART6_TX_PORT, &GPIO_InitStruct);
-		
-		GPIO_InitStruct.Pin = USART6_RX_PIN;  
+
+		GPIO_InitStruct.Pin = USART6_RX_PIN;
     GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
     GPIO_InitStruct.Pull = GPIO_PULLUP;
     GPIO_InitStruct.Speed = GPIO_SPEED_HIGH;
@@ -345,12 +345,12 @@ void HAL_UART_MspInit(UART_HandleTypeDef* huart)
   }
 }
 
-/* --- Blocking (polling-based) read protected with a semaphore --- 
+/* --- Blocking (polling-based) read protected with a semaphore ---
 */
 HAL_StatusTypeDef readPxMutex(uint8_t port, char *buffer, uint16_t n, uint32_t mutexTimeout, uint32_t portTimeout)
 {
 	HAL_StatusTypeDef result = HAL_ERROR;
-	
+
 	if (GetUart(port) != NULL) {
 		/* Wait for the semaphore to be available. */
 		if (osSemaphoreWait(PxRxSemaphoreHandle[port], mutexTimeout) == osOK) {
@@ -361,16 +361,16 @@ HAL_StatusTypeDef readPxMutex(uint8_t port, char *buffer, uint16_t n, uint32_t m
 			osSemaphoreRelease(PxRxSemaphoreHandle[port]);
 		}
 	}
-	
+
 	return result;
 }
 
-/* --- Blocking (polling-based) write protected with a semaphore --- 
+/* --- Blocking (polling-based) write protected with a semaphore ---
 */
 HAL_StatusTypeDef writePxMutex(uint8_t port, char *buffer, uint16_t n, uint32_t mutexTimeout, uint32_t portTimeout)
 {
 	HAL_StatusTypeDef result = HAL_ERROR;
-	
+
 	if (GetUart(port) != NULL) {
 		/*/ Wait for the semaphore to be available. */
 		if (osSemaphoreWait(PxTxSemaphoreHandle[port], mutexTimeout) == osOK) {
@@ -381,52 +381,52 @@ HAL_StatusTypeDef writePxMutex(uint8_t port, char *buffer, uint16_t n, uint32_t 
 			osSemaphoreRelease(PxTxSemaphoreHandle[port]);
 		}
 	}
-	
+
 	return result;
 }
 
-/* --- Non-blocking (interrupt-based) read protected with a semaphore --- 
+/* --- Non-blocking (interrupt-based) read protected with a semaphore ---
 */
 HAL_StatusTypeDef readPxITMutex(uint8_t port, char *buffer, uint16_t n, uint32_t mutexTimeout)
 {
-	HAL_StatusTypeDef result = HAL_ERROR; 
-	
+	HAL_StatusTypeDef result = HAL_ERROR;
+
 	if (GetUart(port) != NULL) {
 		/* Wait for the mutex to be available. */
 		if (osSemaphoreWait(PxRxSemaphoreHandle[port], mutexTimeout) == osOK) {
 			result = HAL_UART_Receive_IT(GetUart(port), (uint8_t *)buffer, n);
 		}
 	}
-	
+
 	return result;
 }
 
-/* --- Non-blocking (interrupt-based) write protected with a semaphore --- 
+/* --- Non-blocking (interrupt-based) write protected with a semaphore ---
 */
 HAL_StatusTypeDef writePxITMutex(uint8_t port, char *buffer, uint16_t n, uint32_t mutexTimeout)
 {
-	HAL_StatusTypeDef result = HAL_ERROR; 
+	HAL_StatusTypeDef result = HAL_ERROR;
 
-	if (GetUart(port) != NULL) {	
+	if (GetUart(port) != NULL) {
 		/* Wait for the mutex to be available. */
 		if (osSemaphoreWait(PxTxSemaphoreHandle[port], mutexTimeout) == osOK) {
 			result = HAL_UART_Transmit_IT(GetUart(port), (uint8_t *)buffer, n);
 		}
 	}
-	
+
 	return result;
 }
 
-/* --- Update baudrate for this port --- 
+/* --- Update baudrate for this port ---
 */
 BOS_Status UpdateBaudrate(uint8_t port, uint32_t baudrate)
 {
-	BOS_Status result = BOS_OK; 
+	BOS_Status result = BOS_OK;
 	UART_HandleTypeDef *huart = GetUart(port);
 
 	huart->Init.BaudRate = baudrate;
 	HAL_UART_Init(huart);
-	
+
 	return result;
 }
 

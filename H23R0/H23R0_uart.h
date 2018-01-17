@@ -1,8 +1,8 @@
 /**
   ******************************************************************************
-  * File Name          : H02R0_gpio.h
-  * Description        : This file contains all the functions prototypes for 
-  *                      the gpio  
+  * File Name          : H23R0_uart.h
+  * Description        : This file provides code for the configuration
+  *                      of the USART instances.
   ******************************************************************************
   *
   * COPYRIGHT(c) 2015 STMicroelectronics
@@ -31,15 +31,15 @@
   *
   ******************************************************************************
   */
-	
+
 /*
 		MODIFIED by Hexabitz for BitzOS (BOS) V0.0.0 - Copyright (C) 2016 Hexabitz
     All rights reserved
 */
 
 /* Define to prevent recursive inclusion -------------------------------------*/
-#ifndef __H02R0_gpio_H
-#define __H02R0_gpio_H
+#ifndef __H23R0_uart_H
+#define __H23R0_uart_H
 #ifdef __cplusplus
  extern "C" {
 #endif
@@ -47,23 +47,41 @@
 /* Includes ------------------------------------------------------------------*/
 #include "stm32f0xx_hal.h"
 
+/* External variables -----------------------------------------------*/
+extern FlagStatus UartRxReady;
+extern FlagStatus UartTxReady;
+extern uint8_t PcPort;
 
-extern void MX_GPIO_Init(void);
-extern void IND_LED_Init(void);
-	 
-extern void BT_RST_GPIO_Init(void);
-#ifdef H02R1	 
-extern void BT_VSP_GPIO_Init(void);
-extern void BT_MODE_GPIO_Init(void);
-extern void BT_HOST_WKUP_GPIO_Init(void);
-extern void BT_CTS_RTS_GPIO_Init(void);
-#endif
+
+// Blocking (polling-based) read
+#define readPx(port, buffer, n, timeout) while(HAL_UART_Receive(GetUart(port), (uint8_t *)buffer, n, timeout) != HAL_OK) {}
+
+// Blocking (polling-based) write
+#define writePx(port, buffer, timeout) while(HAL_UART_Transmit(GetUart(port), (uint8_t *)buffer, strlen(buffer), timeout) != HAL_OK) {}
+
+/* Check which UART interrupt occured */
+#define HAL_UART_GET_IT_SOURCE(__HANDLE__, __INTERRUPT__)  ((((__HANDLE__)->Instance->ISR & (__INTERRUPT__)) == (__INTERRUPT__)) ? SET : RESET)
+
+/* External function prototypes -----------------------------------------------*/
+
+extern HAL_StatusTypeDef readPxMutex(uint8_t port, char *buffer, uint16_t n, uint32_t mutexTimeout, uint32_t portTimeout);
+extern HAL_StatusTypeDef writePxMutex(uint8_t port, char *buffer, uint16_t n, uint32_t mutexTimeout, uint32_t portTimeout);
+extern HAL_StatusTypeDef readPxITMutex(uint8_t port, char *buffer, uint16_t n, uint32_t mutexTimeout);
+extern HAL_StatusTypeDef writePxITMutex(uint8_t port, char *buffer, uint16_t n, uint32_t mutexTimeout);
+
 
 
 #ifdef __cplusplus
 }
 #endif
-#endif /*__H02R0_gpio_H */
+#endif /*__H23R0_uart_H */
 
+/**
+  * @}
+  */
+
+/**
+  * @}
+  */
 
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

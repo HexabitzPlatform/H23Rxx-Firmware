@@ -1,8 +1,8 @@
 /**
   ******************************************************************************
-  * File Name          : H02R0_dma.h
-  * Description        : This file contains all the functions prototypes for 
-  *                      the DMA  
+  * File Name          : H23R0_dma.h
+  * Description        : This file contains all the functions prototypes for
+  *                      the DMA
   ******************************************************************************
   *
   * COPYRIGHT(c) 2015 STMicroelectronics
@@ -31,15 +31,15 @@
   *
   ******************************************************************************
   */
-	
+
 /*
 		MODIFIED by Hexabitz for BitzOS (BOS) V0.0.0 - Copyright (C) 2016 Hexabitz
     All rights reserved
 */
 
 /* Define to prevent recursive inclusion -------------------------------------*/
-#ifndef __H02R0_dma_H
-#define __H02R0_dma_H
+#ifndef __H23R0_dma_H
+#define __H23R0_dma_H
 
 #ifdef __cplusplus
  extern "C" {
@@ -47,9 +47,9 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "stm32f0xx_hal.h"
-	 
-	 
-/* Check which DMA interrupt occured */	 
+
+
+/* Check which DMA interrupt occured */
 #define HAL_DMA_GET_IT_SOURCE(__HANDLE__, __INTERRUPT__)  ((((__HANDLE__)->ISR & (__INTERRUPT__)) == (__INTERRUPT__)) ? SET : RESET)
 
 
@@ -59,7 +59,7 @@ extern DMA_HandleTypeDef portMemDMA2;
 extern DMA_HandleTypeDef portMemDMA3;
 extern DMA_HandleTypeDef portPortDMA1;
 extern DMA_HandleTypeDef portPortDMA2;
-extern DMA_HandleTypeDef portPortDMA3;	 
+extern DMA_HandleTypeDef portPortDMA3;
 
 extern uint32_t DMAStream1count;
 extern uint32_t DMAStream2count;
@@ -69,7 +69,7 @@ extern uint32_t DMAStream2total;
 extern uint32_t DMAStream3total;
 
 extern UART_HandleTypeDef* dmaStreamDst[3];
-	 
+
 /* External function prototypes ----------------------------------------------*/
 extern void MX_DMA_Init(void);
 extern void PortMemDMA1_Setup(UART_HandleTypeDef* huart, uint8_t num);
@@ -87,7 +87,7 @@ extern void StopPortPortDMA3(void);
 }
 #endif
 
-#endif /* __H02R0_dma_H */
+#endif /* __H23R0_dma_H */
 
 
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
