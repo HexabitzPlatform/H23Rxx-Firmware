@@ -174,7 +174,7 @@ void Module_Init(void)
 */
 void ControlBluetoothTask(void * argument)
 {
-	static uint8_t code_field = 0;
+	static uint16_t code_field = 0;
   uint8_t tMessage[MAX_MESSAGE_SIZE] = {0};
 
 
@@ -183,13 +183,11 @@ void ControlBluetoothTask(void * argument)
 	{
 		/* Wait forever until a message is received from the Bluetooth module */
 		ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
-    /* length message */
-    messageLength[PORT_BTC_CONN-1] = cMessage[PORT_BTC_CONN-1][1] - 0x30;
-    messageLength[PORT_BTC_CONN-1] += (cMessage[PORT_BTC_CONN-1][0] - 0x30) * 10;
     /* code field of message */
     code_field = cMessage[PORT_BTC_CONN-1][4] - 0x30;
     code_field += (cMessage[PORT_BTC_CONN-1][3] - 0x30) * 10;
     code_field += (cMessage[PORT_BTC_CONN-1][2] - 0x30) * 100;
+    code_field += (cMessage[PORT_BTC_CONN-1][1] - 0x30) * 1000;
     switch(code_field)
     {
       case CODE_H23R0_EVBTC_SPPCONN:
@@ -223,7 +221,7 @@ void ControlBluetoothTask(void * argument)
 
       case CODE_H23R0_SHOW_DEBUG_INFO:
       case CODE_H23R0_SCAN_INFO:
-				memcpy(tMessage, &cMessage[PORT_BTC_CONN-1][4], (size_t)(messageLength[PORT_BTC_CONN-1]-4));
+				memcpy(tMessage, &cMessage[PORT_BTC_CONN-1][5], (size_t)(messageLength[PORT_BTC_CONN-1]-6));
 				btShowMsgOnTerminal((uint8_t *)"\r\n", tMessage);
 				osDelay(10);
         break;
