@@ -46,7 +46,8 @@
 extern TaskHandle_t xCommandConsoleTaskHandle;
 extern void NotifyMessagingTaskFromISR(uint8_t port);
 
-
+/* Private variables --------------------------------------------------------*/
+static uint8_t indexDetectBtcMsg = 0;
 
 /******************************************************************************/
 /*            Cortex-M0 Processor Interruption and Exception Handlers         */
@@ -245,19 +246,41 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 		cRxedChar = huart->Instance->RDR;
 
 		/* Received Bluetooth's message for control this module */
-		if((PORT_BTC_CONN == port) && ('|' == cRxedChar))
-		{
-			portStatus[port] = MSG;
-			/* Activate DMA transfer */
-			PortMemDMA3_Setup(huart, MAX_MESSAGE_SIZE);
-    }
-    /* end a frame message that have been sent from bluetooth module */
-    else if((PORT_BTC_CONN == port) && ('~' == cRxedChar))
+		if ( (PORT_BTC_CONN == port) && ('~' == cRxedChar) )
     {
-			cRxedChar = '\0';
-      xHigherPriorityTaskWoken = pdFALSE;
-      vTaskNotifyGiveFromISR(ControlBluetoothTaskHandle, &( xHigherPriorityTaskWoken ) );
-		}
+      if (0 == indexDetectBtcMsg)
+      {
+        portStatus[port] = MSG;
+        /* Activate DMA transfer */
+        PortMemDMA3_Setup(huart, 2+1); /* add 1 for getting 1 dectection starting/ending character */
+        indexDetectBtcMsg++;
+      }
+      else if (1 == indexDetectBtcMsg)
+      {
+        portStatus[port] = MSG;
+        /* length message */
+        messageLength[PORT_BTC_CONN-1] = cMessage[PORT_BTC_CONN-1][1] - 0x30;
+        messageLength[PORT_BTC_CONN-1] += (cMessage[PORT_BTC_CONN-1][0] - 0x30) * 10;
+        memset(cMessage[PORT_BTC_CONN-1], 0, (size_t) MAX_MESSAGE_SIZE);
+        indexDetectBtcMsg++;
+				/* Activate DMA transfer */
+				/* add 2 for getting 2 dectection starting/ending character */
+				PortMemDMA3_Setup(huart,  messageLength[PORT_BTC_CONN-1]+2);
+				indexDetectBtcMsg++;
+			}
+      /* end a frame message that have been sent from bluetooth module */
+      else if (3 == indexDetectBtcMsg)
+      {
+        cRxedChar = '\0';
+        indexDetectBtcMsg = 0;
+        xHigherPriorityTaskWoken = pdFALSE;
+        vTaskNotifyGiveFromISR(ControlBluetoothTaskHandle, &( xHigherPriorityTaskWoken ) );
+      }
+			else
+			{
+				/* nothing to do here */
+			}
+    }
 		/* Received CLI request? */
 		else if(cRxedChar == '\r' )
 		{

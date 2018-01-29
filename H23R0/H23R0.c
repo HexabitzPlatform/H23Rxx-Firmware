@@ -164,7 +164,8 @@ void Module_Init(void)
 	/* Create the Bluetooth module task */
 	xTaskCreate(ControlBluetoothTask, (const char *) "ControlBluetooth", (2*configMINIMAL_STACK_SIZE), NULL, osPriorityNormal, &ControlBluetoothTaskHandle);
 	/* In default, the BT900 will run in the "Self-contained Run mode" */
-	btRunScript();
+	/* btRunScript(); */
+	btVspMode(H23R0_RUN_VspBridgeToUartMode);
 }
 
 /*-----------------------------------------------------------*/
@@ -221,18 +222,9 @@ void ControlBluetoothTask(void * argument)
         break;
 
       case CODE_H23R0_SHOW_DEBUG_INFO:
-				/* Copy the generated string to messageParams */
-				memcpy(messageParams, &cMessage[PORT_BTC_CONN-1][5], (size_t)(messageLength[PORT_BTC_CONN-1]-6));
-				/* Send command response */
-				SendMessageToModule(myID, CODE_CLI_response, (size_t)(messageLength[PORT_BTC_CONN-1]-6));
-				osDelay(10); 
-        break;
-
       case CODE_H23R0_SCAN_INFO:
-				/* Copy the generated string to messageParams */
-				memcpy(messageParams, &cMessage[PORT_BTC_CONN-1][5], (size_t)(messageLength[PORT_BTC_CONN-1]-6));
-				/* Send command response */
-				SendMessageToModule(myID, CODE_CLI_response, (size_t)(messageLength[PORT_BTC_CONN-1]-6));
+				memcpy(tMessage, &cMessage[PORT_BTC_CONN-1][4], (size_t)(messageLength[PORT_BTC_CONN-1]-4));
+				btShowMsgOnTerminal((uint8_t *)"\r\n", tMessage);
 				osDelay(10);
         break;
 
@@ -349,7 +341,7 @@ void btSendMsgToTerminal(uint8_t *pStr)
                 cmd50ms,
                 HAL_MAX_DELAY);
   #else
-	//writePxMutex(PcPort, (char *) pStr, strlen((char *) pStr), cmd50ms, HAL_MAX_DELAY);
+	writePxMutex(PcPort, (char *) pStr, strlen((char *) pStr), cmd50ms, HAL_MAX_DELAY);
   #endif
 }
 
