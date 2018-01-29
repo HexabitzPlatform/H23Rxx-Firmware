@@ -1,8 +1,8 @@
 // BitzOS (BOS) V0.1.4 - Copyright (C) 2017 Hexabitz
-//	All rights reserved
+//  All rights reserved
 //
-//	File Name     : ProcessMsgBt900.sb
-//	Description   : Source code for control and process message on BT900 module.
+//  File Name     : ProcessMsgBt900.sb
+//  Description   : Source code for control and process message on BT900 module.
 //
 //
 //******************************************************************************
@@ -15,12 +15,12 @@
 #define ENABLE_DEBUG_PRINTS             1
 
 // Led d2 - SIO12
-#define LED_BTC_D2										  12
+#define LED_BTC_D2                      12
 
 // UART
 //#define UART_BAUDRATE                   (921600)
-#define UART_BAUDRATE										(115200)
-#define UART_OPTION											"CN81H"
+#define UART_BAUDRATE                   (115200)
+#define UART_OPTION                     "CN81H"
 #define UART_RX_BUFFER                  (200)    //Depth of the UART Rx buffer
 #define UART_TX_BUFFER                  (200)    //Depth of the UART Tx buffer
 
@@ -34,10 +34,11 @@
 
 
 #define BTC_SET_DISCOVERABLE              1
-#define BTC_SET_CONNECTABLE		            1
+#define BTC_SET_CONNECTABLE               1
 
 //Max length message that can send to MCU
 #define MAX_MESSAGE_SIZE                  50
+#define MAX_SSID_SIZE                     20
 // define code send command to MCU
 #define CODE_H23R0_GET_INFO               2300
 #define CODE_H23R0_OTA_MODE               2301
@@ -114,41 +115,33 @@ ENDSUB
 // This function is called to send message format from Bluetooth module to MCU
 //------------------------------------------------------------------------------
 SUB SendFrameMsgToMcu(parameters$)
-  DIM startFrame$ : startFrame$ = "|"
-  DIM endCode$ : endCode$ = "~"
-  DIM lenEmptyStr, index
+  DIM detectCode$ : detectCode$ = "~"
 
-  lenEmptyStr = StrLen(parameters$)
-
-  // send start frame message
-  PRINT startFrame$
+  // start transmission
+  PRINT detectCode$
   Delay_MS(2) // delay 2ms
 
-  // send data
+  // send data in parameter
   PRINT parameters$
+  Delay_MS(2) // delay 2ms
 
-  // send empty character
-  FOR index = lenEmptyStr TO (MAX_MESSAGE_SIZE - 2)
-    PRINT "\t"
-  NEXT
-
-  // send end code
-  PRINT endCode$
-
+  // end transmission
+  PRINT detectCode$
+  Delay_MS(2) // delay 2ms
 ENDSUB
 
 SUB SendMsgInfoToMcu(code, parameter$)
-  DIM lenStr, _lenStr$
-  DIM strCommand$
-  DIM _strCode$
+  DIM _code$
+  DIM _lenCmd$, lenCmd
+  DIM _cmd$
+  
+  SPRINT #_code$, code
+  _cmd$ = _code$ + parameter$
+  lenCmd = StrLen(_cmd$)
+  SPRINT #_lenCmd$, lenCmd
 
-  lenStr = StrLen(parameter$) + 4 + 2
-  SPRINT #_strCode$ , code
-  SPRINT #_lenStr$ , lenStr
-  strCommand$ = _lenStr$ + _strCode$ + parameter$
-
-  // send command string
-  SendFrameMsgToMcu(strCommand$)
+  SendFrameMsgToMcu(_lenCmd$)
+  SendFrameMsgToMcu(_cmd$)
 ENDSUB
 
 //------------------------------------------------------------------------------
@@ -238,8 +231,8 @@ SUB OnStartup()
   AssertRC(rc, 11)
 
   // Start inquiry
-  rc = BtcInquiryStart(10) // time out in seconds
-  AssertRC(rc, 12)
+  rc = BtcInquiryStart(5) // time out in seconds
+  //AssertRC(rc, 12)
 
   //tempBtcAddr$ = BTC_ADDR
   //rc = BtcPair(tempBtcAddr$, 2)
@@ -276,7 +269,6 @@ FUNCTION HandlerInqResp(respType)
   //BtcInquiryGetReportFull()
   rc = BtcInquiryGetReport(tAddr$, inqData$, nDiscarded, tRssi)
   IF ( (1 == respType) && (IndexInqScan < BTC_SCAN_NUMBER_DEVICES) ) THEN
-  //IF (IndexInqScan < BTC_SCAN_NUMBER_DEVICES) THEN
     Addr$[IndexInqScan] = tAddr$
     Rssi[IndexInqScan] = tRssi
     IndexInqScan = IndexInqScan + 1
@@ -294,23 +286,31 @@ ENDFUNC 1
 
 FUNCTION HandlerGetRemoteName(nStatus)
   DIM remoteNameDevice$
+  DIM _remoteNameDevice$
   DIM tAddr$
   DIM tStatus
   DIM _tIndex$
   DIM _tRssi$
   DIM strTemp$
 
-  rc = BtcGetRemoteFriendlyName(remoteNameDevice$, tAddr$, tStatus)
+  rc = BtcGetRemoteFriendlyName(_remoteNameDevice$, tAddr$, tStatus)
+  IF (StrLen(_remoteNameDevice$) > MAX_SSID_SIZE) THEN
+    remoteNameDevice$ = Left$(_remoteNameDevice$, (MAX_SSID_SIZE - 1)) + "~"
+  ELSE
+    remoteNameDevice$ = _remoteNameDevice$
+  ENDIF
   IF (0 == nStatus) THEN
     SPRINT #_tIndex$, IndexGetName
     SPRINT #_tRssi$, Rssi[IndexGetName]
-    // strTemp$ = "[" + _tIndex$ +"]"+"\t"+ Addr$[IndexGetName] +"\t"+ remoteNameDevice$ +"\t"+ _tRssi$
-    // PRINT strTemp$ // debug info
-    strTemp$ = "[" + _tIndex$ +"]"+"\t"+ remoteNameDevice$ +"\t"+ _tRssi$
-    SendMsgInfoToMcu(CODE_H23R0_SCAN, strTemp$)
+    strTemp$ = "[" + _tIndex$ +"]\t"+ remoteNameDevice$ +"\t"+ _tRssi$
+    BlinkLed(2, 10) // number of blink: 2; time delay: 10 ms
+    SendMsgInfoToMcu(CODE_H23R0_SCAN_INFO, strTemp$)
     IndexGetName = IndexGetName + 1
     IF (IndexGetName <= IndexInqScan) THEN
       rc = BtcQueryRemoteFriendlyName(Addr$[IndexGetName])
+    ELSE
+      // send notification to app
+      rc = SendMsgApp(BTC_APP_INQ_NAME_DEVICES, (IndexGetName - 1))
     ENDIF
   ENDIF // 0 == nStatus
 ENDFUNC 1
@@ -374,11 +374,16 @@ FUNCTION HandlerUartRx()
 ENDFUNC 1
 
 FUNCTION CallMsgApp(msgID, cmd)
-  //IF (BTC_APP_INQ_NAME_DEVICES == msgID) THEN
-    // 
-  //ELSEIF (BTC_APP_CMD_SETTING_BT900 == msgID) THEN
+  DIM _cmd$
+
+  IF (BTC_APP_INQ_NAME_DEVICES == msgID) THEN
+    // debug info
+    _cmd$ = "scan"
+    SendMsgInfoToMcu(CODE_H23R0_LED_STATUS_ON, _cmd$)
+  ELSEIF (BTC_APP_CMD_SETTING_BT900 == msgID) THEN
     // command
-  //ENDIF
+    _cmd$ = "command"
+  ENDIF
 ENDFUNC 1
 
 SUB CleanBtcData()
@@ -414,6 +419,10 @@ IF 0 == rc THEN
 ELSE
   BlinkLed(2, 500)
 ENDIF
+
+//DIM strTest$
+//strTest$ = "[0]\tAnhVT6-StringTest\t-35"
+//SendMsgInfoToMcu(CODE_H23R0_SCAN_INFO,strTest$)
 
 //------------------------------------------------------------------------------
 // Wait for a synchronous event.
