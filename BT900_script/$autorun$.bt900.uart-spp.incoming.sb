@@ -57,13 +57,17 @@
 #define CODE_H23R0_EVBTC_AUTHREQ          2314
 #define CODE_H23R0_EVBTC_PASSKEY          2315
 #define CODE_H23R0_SHOW_DEBUG_INFO        2316
-#define CODE_H23R0_SCAN_INFO              2317
+#define CODE_H23R0_SCAN_REQUIRE           2317
+#define CODE_H23R0_SCAN_RESPONSE          2317
 #define CODE_H23R0_CONNECT                2318
 
 
 #define BTC_SCAN_NUMBER_DEVICES           10
 #define BTC_APP_INQ_NAME_DEVICES          100
 #define BTC_APP_CMD_SETTING_BT900         101
+
+// define timeout an inquiry
+#define BTC_TIMEOUT_INQUIRY               5 // second
 
 //******************************************************************************
 // Library Import
@@ -86,6 +90,9 @@ DIM StreamBridgeHandle
 
 // string for receive
 DIM MsgCommandReceive$
+
+DIM UartCmd$                 //CMD line from uart
+DIM StrRsp$ AS STRING        //Uart rx data is stored here
 
 //******************************************************************************
 // Function and Subroutine definitions
@@ -130,11 +137,14 @@ SUB SendFrameMsgToMcu(parameters$)
   Delay_MS(2) // delay 2ms
 ENDSUB
 
+//------------------------------------------------------------------------------
+//
+//------------------------------------------------------------------------------
 SUB SendMsgInfoToMcu(code, parameter$)
   DIM _code$
   DIM _lenCmd$, lenCmd
   DIM _cmd$
-  
+
   SPRINT #_code$, code
   _cmd$ = _code$ + parameter$
   lenCmd = StrLen(_cmd$)
@@ -166,6 +176,20 @@ SUB BlinkLed(number, delayTimeMs)
 ENDSUB
 
 //------------------------------------------------------------------------------
+//
+//------------------------------------------------------------------------------
+FUNCTION LedOn()
+  GpioWrite(LED_BTC_D2, 1)  // turns D2 led on
+ENDFUNC 1
+
+//------------------------------------------------------------------------------
+//
+//------------------------------------------------------------------------------
+FUNCTION LedOff()
+  GpioWrite(LED_BTC_D2, 0)  // turns D2 led off
+ENDFUNC 1
+
+//------------------------------------------------------------------------------
 // Register Error Handler as early as possible
 //------------------------------------------------------------------------------
 SUB HandlerOnErr()
@@ -184,6 +208,73 @@ SUB AssertRC(rc,ln)
     IF ((0 != rc) && (0 != ENABLE_DEBUG_PRINTS)) THEN
         //PRINT ln$
     ENDIF
+ENDSUB
+
+//------------------------------------------------------------------------------
+//
+//------------------------------------------------------------------------------
+FUNCTION SplitBosMsgFrame(byRef InputStr$, byRef Code, byRef Parameter$) AS INTEGER
+  DIM lenPar AS INTEGER
+  DIM tCode$
+
+  // remove first 3 bytes - length/destination/source field
+  StrShiftLeft(InputStr$, 3)
+
+  // get 2 bytes of code field
+  tCode$ = Left$(InputStr$, 2)
+  StrShiftLeft(InputStr$, 2)
+  Code = StrValDec(tCode$)
+
+  // get n bytes of parameter field
+  lenPar = StrLen(InputStr$) - 1 // Don't count CRC field
+  Parameter$ = Left$(InputStr$, lenPar)
+ENDFUNC lenPar
+
+//------------------------------------------------------------------------------
+// Start inquiry bluetooth devices
+//------------------------------------------------------------------------------
+FUNCTION StartInqBtcDevices()
+  // Start inquiry
+  rc = BtcInquiryStart(BTC_TIMEOUT_INQUIRY) // timeout in seconds
+ENDFUNC 1
+
+//------------------------------------------------------------------------------
+//
+//------------------------------------------------------------------------------
+FUNCTION OnUartCmd()
+  DIM tLenPar AS INTEGER
+  DIM tCode AS INTEGER
+  DIM tPar$ AS STRING
+
+  tLenPar = SplitBosMsgFrame(UartCmd$, tCode, tPar$)
+  SELECT tCode
+    CASE CODE_H23R0_SCAN_REQUIRE
+      rc = StartInqBtcDevices()
+
+    CASE CODE_H23R0_LED_STATUS_ON
+      rc = LedOn()
+
+    CASE CODE_H23R0_LED_STATUS_OFF
+      rc = LedOff()
+
+    CASE ELSE // default case
+      // nothing to do here
+
+  ENDSELECT
+ENDFUNC 1
+
+//------------------------------------------------------------------------------
+//
+//------------------------------------------------------------------------------
+SUB CleanBtcData()
+  DIM index
+
+  FOR index = 0 TO IndexInqScan
+    Addr$[index] = ""
+    Rssi[index] = 0
+  NEXT
+  IndexGetName = 0
+  IndexInqScan = 0
 ENDSUB
 
 //------------------------------------------------------------------------------
@@ -230,10 +321,6 @@ SUB OnStartup()
   rc = BtcInquiryConfig(2, BTC_SCAN_NUMBER_DEVICES) // Max number of inquiry responses to receive
   AssertRC(rc, 11)
 
-  // Start inquiry
-  rc = BtcInquiryStart(5) // time out in seconds
-  //AssertRC(rc, 12)
-
   //tempBtcAddr$ = BTC_ADDR
   //rc = BtcPair(tempBtcAddr$, 2)
   //AssertRC(rc, 13)
@@ -251,6 +338,8 @@ SUB OnStartup()
   rc = BtcSppOpen(SPPHandleConnection)
   AssertRC(rc, 16)
 
+  CleanBtcData()
+
 ENDSUB
 
 //------------------------------------------------------------------------------
@@ -259,6 +348,9 @@ ENDSUB
 SUB CloseConnections()
 ENDSUB
 
+//------------------------------------------------------------------------------
+//
+//------------------------------------------------------------------------------
 FUNCTION HandlerInqResp(respType)
   DIM inqData$
   DIM nDiscarded
@@ -275,6 +367,9 @@ FUNCTION HandlerInqResp(respType)
   ENDIF // 1 == respType
 ENDFUNC 1
 
+//------------------------------------------------------------------------------
+// Header Inquiry TimerOut even - EVBTC_INQUIRY_TIMEOUT
+//------------------------------------------------------------------------------
 FUNCTION BtcTimeOutHeadler()
 
   BlinkLed(10, 50) // number of blink: 10; time delay: 50
@@ -284,6 +379,9 @@ FUNCTION BtcTimeOutHeadler()
   ENDIF // 6 == StrLen(Addr$[IndexGetName])
 ENDFUNC 1
 
+//------------------------------------------------------------------------------
+//
+//------------------------------------------------------------------------------
 FUNCTION HandlerGetRemoteName(nStatus)
   DIM remoteNameDevice$
   DIM _remoteNameDevice$
@@ -304,17 +402,21 @@ FUNCTION HandlerGetRemoteName(nStatus)
     SPRINT #_tRssi$, Rssi[IndexGetName]
     strTemp$ = "[" + _tIndex$ +"]\t"+ remoteNameDevice$ +"\t"+ _tRssi$
     BlinkLed(2, 10) // number of blink: 2; time delay: 10 ms
-    SendMsgInfoToMcu(CODE_H23R0_SCAN_INFO, strTemp$)
+    SendMsgInfoToMcu(CODE_H23R0_SCAN_RESPONSE, strTemp$)
     IndexGetName = IndexGetName + 1
     IF (IndexGetName <= IndexInqScan) THEN
       rc = BtcQueryRemoteFriendlyName(Addr$[IndexGetName])
-    ELSE
-      // send notification to app
-      rc = SendMsgApp(BTC_APP_INQ_NAME_DEVICES, (IndexGetName - 1))
+      IF (IndexGetName == IndexInqScan) THEN
+        // send notification to app
+        rc = SendMsgApp(BTC_APP_INQ_NAME_DEVICES, (IndexGetName - 1))
+      ENDIF
     ENDIF
   ENDIF // 0 == nStatus
 ENDFUNC 1
 
+//------------------------------------------------------------------------------
+//
+//------------------------------------------------------------------------------
 FUNCTION HandlerPairReq()
   DIM tempBtcAddr$
 
@@ -325,6 +427,9 @@ FUNCTION HandlerPairReq()
 
 ENDFUNC 1
 
+//------------------------------------------------------------------------------
+//
+//------------------------------------------------------------------------------
 FUNCTION HandlerPINReq()
   DIM tempBtcAddr$
   DIM tempBtcPin$
@@ -335,6 +440,9 @@ FUNCTION HandlerPINReq()
   rc = BtcSendPinResp(tempBtcPin$)
 ENDFUNC 1
 
+//------------------------------------------------------------------------------
+//
+//------------------------------------------------------------------------------
 FUNCTION HandlerPairRes(nRes)
   IF (0 == nRes) THEN
     BlinkLed(10, 250) // number of blink: 10; time delay: 250
@@ -343,6 +451,9 @@ FUNCTION HandlerPairRes(nRes)
   ENDIF
 ENDFUNC 1
 
+//------------------------------------------------------------------------------
+//
+//------------------------------------------------------------------------------
 FUNCTION SppConnect(headle, result)
   SPPHandleConnection = headle
   // Bridge to UART
@@ -351,28 +462,30 @@ FUNCTION SppConnect(headle, result)
   rc = StreamBridge(StreamUartHandle, StreamSPPHandle, StreamBridgeHandle)
 ENDFUNC 1
 
+//------------------------------------------------------------------------------
+//
+//------------------------------------------------------------------------------
 FUNCTION HandlerSppDataRx()
 ENDFUNC 1
 
-FUNCTION HandlerUartRx()
-  DIM character$
-  DIM charHex
-  DIM lenStr
-  DIM crcStr$ : crcStr$ = "75"
+//------------------------------------------------------------------------------
+// Header receive data in UART port - EVUARTRX
+//------------------------------------------------------------------------------
+FUNCTION HandlerUartRx() AS INTEGER
+  DIM nMatch
 
-  // check CRC code
-  //lenStr = UartRead(character$)
-  //charHex = STRHEXIZE$(character$)
-  //IF (0 != lenStr)
-    //IF (!(strCmp(crcStr$, character$))
-      // end of message send to bluetooth  module
-      //SPRINT #MsgCommandReceive$, character$
-    //ELSE
-    //ENDIF
-  //ENDIF
-
+  // Check if CRC has been received. It has be fixed value equal 0x75 in the BOS code.
+  nMatch=UartReadMatch(StrRsp$,0x75)
+  IF nMatch!=0 THEN
+    // CRC exists in the input buffer
+    UartCmd$ = StrSplitLeft$(StrRsp$,nMatch)
+    EXITFUNC OnUartCmd()
+  ENDIF
 ENDFUNC 1
 
+//------------------------------------------------------------------------------
+//
+//------------------------------------------------------------------------------
 FUNCTION CallMsgApp(msgID, cmd)
   DIM _cmd$
 
@@ -385,17 +498,6 @@ FUNCTION CallMsgApp(msgID, cmd)
     _cmd$ = "command"
   ENDIF
 ENDFUNC 1
-
-SUB CleanBtcData()
-  DIM index
-
-  FOR index = 0 TO IndexInqScan
-    Addr$[index] = ""
-    Rssi[index] = 0
-  NEXT
-  IndexGetName = 0
-  IndexInqScan = 0
-ENDSUB
 
 //******************************************************************************
 // Equivalent to main() in C
@@ -412,7 +514,7 @@ ONEVENT EVBTC_SPP_DATA_RECEIVED     CALL HandlerSppDataRx
 ONEVENT EVBTC_REMOTENAME_RECEIVED   CALL HandlerGetRemoteName
 ONEVENT EVMSGAPP                    CALL CallMsgApp
 
-CleanBtcData()
+
 OnStartup()
 IF 0 == rc THEN
   BlinkLed(1, 500)
@@ -423,6 +525,7 @@ ENDIF
 //DIM strTest$
 //strTest$ = "[0]\tAnhVT6-StringTest\t-35"
 //SendMsgInfoToMcu(CODE_H23R0_SCAN_INFO,strTest$)
+//SendMsgInfoToMcu(CODE_H23R0_LED_STATUS_ON, strTest$)
 
 //------------------------------------------------------------------------------
 // Wait for a synchronous event.

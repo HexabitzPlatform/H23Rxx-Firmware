@@ -176,6 +176,7 @@ void ControlBluetoothTask(void * argument)
 {
 	static uint16_t code_field = 0;
   uint8_t tMessage[MAX_MESSAGE_SIZE] = {0};
+  int8_t *pcOutputString;
 
 
 	/* Infinite loop */
@@ -220,9 +221,14 @@ void ControlBluetoothTask(void * argument)
         break;
 
       case CODE_H23R0_SHOW_DEBUG_INFO:
-      case CODE_H23R0_SCAN_INFO:
-				memcpy(tMessage, &cMessage[PORT_BTC_CONN-1][5], (size_t)(messageLength[PORT_BTC_CONN-1]-6));
-				btShowMsgOnTerminal((uint8_t *)"\r\n", tMessage);
+      	break;
+
+      case CODE_H23R0_SCAN_RESPONSE:
+      	/* Obtain the address of the output buffer */
+				pcOutputString = FreeRTOS_CLIGetOutputBuffer();
+				memcpy(pcOutputString, &cMessage[PORT_BTC_CONN-1][5], (size_t)(messageLength[PORT_BTC_CONN-1]-4));
+				/*btShowMsgOnTerminal((uint8_t *)"\r\n", tMessage); */
+				/*writePxMutex(PcPort, pcOutputString, strlen(pcUserMessage), cmd50ms, HAL_MAX_DELAY);*/
 				osDelay(10);
         break;
 

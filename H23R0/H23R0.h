@@ -184,7 +184,8 @@ extern TaskHandle_t ControlBluetoothTaskHandle;
 #define CODE_H23R0_EVBTC_AUTHREQ          2314
 #define CODE_H23R0_EVBTC_PASSKEY          2315
 #define CODE_H23R0_SHOW_DEBUG_INFO        2316
-#define CODE_H23R0_SCAN_INFO              2317
+#define CODE_H23R0_SCAN_REQUIRE           2317
+#define CODE_H23R0_SCAN_RESPONSE          2317
 #define CODE_H23R0_CONNECT                2318
 
 /* -----------------------------------------------------------------------
