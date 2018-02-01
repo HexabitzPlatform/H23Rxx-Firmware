@@ -60,6 +60,7 @@
 #define CODE_H23R0_SCAN_REQUIRE           2317
 #define CODE_H23R0_SCAN_RESPONSE          2317
 #define CODE_H23R0_CONNECT                2318
+#define CODE_H23R0_UNKNOWN_CMD            2399
 
 
 #define BTC_SCAN_NUMBER_DEVICES           10
@@ -138,7 +139,7 @@ SUB SendFrameMsgToMcu(parameters$)
 ENDSUB
 
 //------------------------------------------------------------------------------
-//
+// Send an message to MCU with code and parameter string
 //------------------------------------------------------------------------------
 SUB SendMsgInfoToMcu(code, parameter$)
   DIM _code$
@@ -176,14 +177,14 @@ SUB BlinkLed(number, delayTimeMs)
 ENDSUB
 
 //------------------------------------------------------------------------------
-//
+// Turn On led on BT900 board
 //------------------------------------------------------------------------------
 FUNCTION LedOn()
   GpioWrite(LED_BTC_D2, 1)  // turns D2 led on
 ENDFUNC 1
 
 //------------------------------------------------------------------------------
-//
+// Turn Off led on BT900 board
 //------------------------------------------------------------------------------
 FUNCTION LedOff()
   GpioWrite(LED_BTC_D2, 0)  // turns D2 led off
@@ -211,9 +212,9 @@ SUB AssertRC(rc,ln)
 ENDSUB
 
 //------------------------------------------------------------------------------
-//
+// Get data for Code and Parameter fields from MCU
 //------------------------------------------------------------------------------
-FUNCTION SplitBosMsgFrame(byRef InputStr$, byRef Code, byRef Parameter$) AS INTEGER
+FUNCTION SplitBosMsgFrame(byRef InputStr$, byRef Code$, byRef Parameter$) AS INTEGER
   DIM lenPar AS INTEGER
   DIM tCode$
 
@@ -223,7 +224,8 @@ FUNCTION SplitBosMsgFrame(byRef InputStr$, byRef Code, byRef Parameter$) AS INTE
   // get 2 bytes of code field
   tCode$ = Left$(InputStr$, 2)
   StrShiftLeft(InputStr$, 2)
-  Code = StrValDec(tCode$)
+  //Code = StrValDec(tCode$)
+  Code$ = tCode$
 
   // get n bytes of parameter field
   lenPar = StrLen(InputStr$) - 1 // Don't count CRC field
@@ -245,8 +247,12 @@ FUNCTION OnUartCmd()
   DIM tLenPar AS INTEGER
   DIM tCode AS INTEGER
   DIM tPar$ AS STRING
+  DIM strTemp$
+  DIM _tCode$
 
-  tLenPar = SplitBosMsgFrame(UartCmd$, tCode, tPar$)
+  SendMsgInfoToMcu(CODE_H23R0_UNKNOWN_CMD, UartCmd$)
+  tLenPar = SplitBosMsgFrame(UartCmd$, _tCode$, tPar$)
+  tCode = StrValDec(_tCode$)
   SELECT tCode
     CASE CODE_H23R0_SCAN_REQUIRE
       rc = StartInqBtcDevices()
@@ -258,13 +264,15 @@ FUNCTION OnUartCmd()
       rc = LedOff()
 
     CASE ELSE // default case
-      // nothing to do here
+      //SPRINT #_tCode$, tCode
+      strTemp$ = "unknown cmd" + _tCode$ + ":"+ tPar$
+      SendMsgInfoToMcu(CODE_H23R0_UNKNOWN_CMD, strTemp$)
 
   ENDSELECT
 ENDFUNC 1
 
 //------------------------------------------------------------------------------
-//
+// Init global variable in smartBASIC program for BT900 module
 //------------------------------------------------------------------------------
 SUB CleanBtcData()
   DIM index
@@ -368,7 +376,7 @@ FUNCTION HandlerInqResp(respType)
 ENDFUNC 1
 
 //------------------------------------------------------------------------------
-// Header Inquiry TimerOut even - EVBTC_INQUIRY_TIMEOUT
+// Handler Inquiry TimerOut even - EVBTC_INQUIRY_TIMEOUT
 //------------------------------------------------------------------------------
 FUNCTION BtcTimeOutHeadler()
 
@@ -415,7 +423,7 @@ FUNCTION HandlerGetRemoteName(nStatus)
 ENDFUNC 1
 
 //------------------------------------------------------------------------------
-//
+// Handler event: EVBTC_PAIR_REQUEST
 //------------------------------------------------------------------------------
 FUNCTION HandlerPairReq()
   DIM tempBtcAddr$
@@ -428,7 +436,7 @@ FUNCTION HandlerPairReq()
 ENDFUNC 1
 
 //------------------------------------------------------------------------------
-//
+// Handler event: EVBTC_PIN_REQUEST
 //------------------------------------------------------------------------------
 FUNCTION HandlerPINReq()
   DIM tempBtcAddr$
@@ -441,7 +449,7 @@ FUNCTION HandlerPINReq()
 ENDFUNC 1
 
 //------------------------------------------------------------------------------
-//
+// Handler event: EVBTC_PAIR_RESULT
 //------------------------------------------------------------------------------
 FUNCTION HandlerPairRes(nRes)
   IF (0 == nRes) THEN
@@ -452,7 +460,7 @@ FUNCTION HandlerPairRes(nRes)
 ENDFUNC 1
 
 //------------------------------------------------------------------------------
-//
+// Handler event: EVSPPCONN
 //------------------------------------------------------------------------------
 FUNCTION SppConnect(headle, result)
   SPPHandleConnection = headle
@@ -463,13 +471,13 @@ FUNCTION SppConnect(headle, result)
 ENDFUNC 1
 
 //------------------------------------------------------------------------------
-//
+// Handler
 //------------------------------------------------------------------------------
 FUNCTION HandlerSppDataRx()
 ENDFUNC 1
 
 //------------------------------------------------------------------------------
-// Header receive data in UART port - EVUARTRX
+// Handler event - EVUARTRX
 //------------------------------------------------------------------------------
 FUNCTION HandlerUartRx() AS INTEGER
   DIM nMatch
@@ -484,7 +492,7 @@ FUNCTION HandlerUartRx() AS INTEGER
 ENDFUNC 1
 
 //------------------------------------------------------------------------------
-//
+// Handler
 //------------------------------------------------------------------------------
 FUNCTION CallMsgApp(msgID, cmd)
   DIM _cmd$

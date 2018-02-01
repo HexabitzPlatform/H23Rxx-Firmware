@@ -45,7 +45,7 @@ TaskHandle_t ControlBluetoothTaskHandle = NULL;
 void ControlBluetoothTask(void * argument);
 void btEnableHandshakeUart(void);
 void btDisableHandshakeUart(void);
-void btSendMsgToTerminal(uint8_t *pStr);
+void btSendMsgToTerminal(uint8_t *pStr, uint8_t lenStr);
 void btShowMsgOnTerminal(uint8_t *pStr1, uint8_t *pStr2);
 HAL_StatusTypeDef btSendCommandToBtc(uint8_t *command);
 void btResetBt900Module(void);
@@ -176,7 +176,6 @@ void ControlBluetoothTask(void * argument)
 {
 	static uint16_t code_field = 0;
   uint8_t tMessage[MAX_MESSAGE_SIZE] = {0};
-  int8_t *pcOutputString;
 
 
 	/* Infinite loop */
@@ -224,12 +223,7 @@ void ControlBluetoothTask(void * argument)
       	break;
 
       case CODE_H23R0_SCAN_RESPONSE:
-      	/* Obtain the address of the output buffer */
-				pcOutputString = FreeRTOS_CLIGetOutputBuffer();
-				memcpy(pcOutputString, &cMessage[PORT_BTC_CONN-1][5], (size_t)(messageLength[PORT_BTC_CONN-1]-4));
-				/*btShowMsgOnTerminal((uint8_t *)"\r\n", tMessage); */
-				/*writePxMutex(PcPort, pcOutputString, strlen(pcUserMessage), cmd50ms, HAL_MAX_DELAY);*/
-				osDelay(10);
+      	btSendMsgToTerminal(&cMessage[PORT_BTC_CONN-1][5], messageLength[PORT_BTC_CONN-1]-4);
         break;
 
       default:
@@ -304,6 +298,7 @@ Module_Status Module_MessagingTask(uint16_t code, uint8_t port, uint8_t src, uin
 */
 void RegisterModuleCLICommands(void)
 {
+	FreeRTOS_CLIRegisterCommand( &btGetInfoCommandDefinition);
 	FreeRTOS_CLIRegisterCommand( &btUpdateScriptCommandDefinition);
 	FreeRTOS_CLIRegisterCommand( &btRunScriptCommandDefinition);
 	FreeRTOS_CLIRegisterCommand( &btVspModeCommandDefinition);
@@ -336,17 +331,14 @@ void btDisableHandshakeUart(void)
 
 /* --- Setting connection to send a message into Terminal app
 */
-void btSendMsgToTerminal(uint8_t *pStr)
+void btSendMsgToTerminal(uint8_t *pStr, uint8_t lenStr)
 {
-  #if (H23R0_SHOW_DEBUG_INFO_TERMINAL == H23R0_ENABLE_DEBUG_BTC)
-	writePxMutex( H23R0_UART_DEBUG_PORT,
-                (char *) pStr,
-                strlen((char *) pStr),
-                cmd50ms,
-                HAL_MAX_DELAY);
-  #else
-	writePxMutex(PcPort, (char *) pStr, strlen((char *) pStr), cmd50ms, HAL_MAX_DELAY);
-  #endif
+  int8_t *pcOutputString;
+
+	/* Obtain the address of the output buffer */
+	pcOutputString = FreeRTOS_CLIGetOutputBuffer();
+	memcpy(pcOutputString, (int8_t *)pStr, (size_t)(lenStr));
+	osDelay(10);
 }
 
 /*-----------------------------------------------------------*/
@@ -355,8 +347,8 @@ void btSendMsgToTerminal(uint8_t *pStr)
 */
 void btShowMsgOnTerminal(uint8_t *pStr1, uint8_t *pStr2)
 {
-  btSendMsgToTerminal(pStr1);
-  btSendMsgToTerminal(pStr2);
+  /* btSendMsgToTerminal(pStr1);
+  btSendMsgToTerminal(pStr2); */
 }
 
 /*-----------------------------------------------------------*/
@@ -481,6 +473,17 @@ static portBASE_TYPE btGetInfoCommand( int8_t *pcWriteBuffer, size_t xWriteBuffe
 	/* Get information from the BT900 */
 
 	sprintf( ( char * ) pcWriteBuffer, "Get information from BT900 module\r\n");
+
+	/* debug code */
+	messageParams[0] = 'O';
+	messageParams[1] = 'n';
+	SendMessageFromPort(PORT_BTC_CONN, 0, 0, CODE_H23R0_LED_STATUS_ON, 2);
+	
+	/* debug code */
+	/*messageParams[0] = 'O';
+	messageParams[1] = 'f';
+	messageParams[2] = 'f';
+	SendMessageFromPort(PORT_BTC_CONN, 0, 0, CODE_H23R0_LED_STATUS_OFF, 3);*/
 
 	/* There is no more data to return after this single string, so return pdFALSE. */
 	return pdFALSE;
