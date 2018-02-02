@@ -36,6 +36,15 @@ UART_HandleTypeDef huart4;
 UART_HandleTypeDef huart5;
 UART_HandleTypeDef huart6;
 
+/* Show state of transmission from BT900 module to MCU
+ * 0 - Nothing
+ * 1 - Have just received a new message from BT900
+ * 2 - Finished transmission 
+ */
+uint8_t stateTransmitBtToMcu;
+
+EventGroupHandle_t handleUartTerminal = NULL;
+#define EVENT_BIT_0	( 1 << 0 )
 
 /* Private variables ---------------------------------------------------------*/
 
@@ -161,6 +170,10 @@ void Module_Init(void)
 #endif
   /* setting baudrate */
   UpdateBaudrate(PORT_BTC_CONN, 115200); /* Normal baudrate for BT900 */
+  /* clean global variable */
+  stateTransmitBtToMcu = 0;
+  /* create a event group for UART port */
+  handleUartTerminal = xEventGroupCreate();
 	/* Create the Bluetooth module task */
 	xTaskCreate(ControlBluetoothTask, (const char *) "ControlBluetooth", (2*configMINIMAL_STACK_SIZE), NULL, osPriorityNormal, &ControlBluetoothTaskHandle);
 	/* In default, the BT900 will run in the "Self-contained Run mode" */
@@ -222,8 +235,14 @@ void ControlBluetoothTask(void * argument)
       case CODE_H23R0_SHOW_DEBUG_INFO:
       	break;
 
-      case CODE_H23R0_SCAN_RESPONSE:
+      case CODE_H23R0_SCAN_RES:
       	btSendMsgToTerminal(&cMessage[PORT_BTC_CONN-1][5], messageLength[PORT_BTC_CONN-1]-4);
+        xEventGroupSetBits(handleUartTerminal, EVENT_BIT_0);
+      	stateTransmitBtToMcu  = 1;
+        break;
+
+      case CODE_H23R0_FINISH_TRANS:
+      	stateTransmitBtToMcu  = 2;
         break;
 
       default:
@@ -333,11 +352,14 @@ void btDisableHandshakeUart(void)
 */
 void btSendMsgToTerminal(uint8_t *pStr, uint8_t lenStr)
 {
-  int8_t *pcOutputString;
+  int8_t *tOutputTerminal;
 
 	/* Obtain the address of the output buffer */
-	pcOutputString = FreeRTOS_CLIGetOutputBuffer();
-	memcpy(pcOutputString, (int8_t *)pStr, (size_t)(lenStr));
+	tOutputTerminal = FreeRTOS_CLIGetOutputBuffer();
+
+	configASSERT( tOutputTerminal );
+	memset(&tOutputTerminal[0], 0, (size_t)(lenStr + 1));
+	memcpy(&tOutputTerminal[0], (char *)pStr, (size_t)(lenStr));
 	osDelay(10);
 }
 
@@ -474,16 +496,6 @@ static portBASE_TYPE btGetInfoCommand( int8_t *pcWriteBuffer, size_t xWriteBuffe
 
 	sprintf( ( char * ) pcWriteBuffer, "Get information from BT900 module\r\n");
 
-	/* debug code */
-	messageParams[0] = 'O';
-	messageParams[1] = 'n';
-	SendMessageFromPort(PORT_BTC_CONN, 0, 0, CODE_H23R0_LED_STATUS_ON, 2);
-	
-	/* debug code */
-	/*messageParams[0] = 'O';
-	messageParams[1] = 'f';
-	messageParams[2] = 'f';
-	SendMessageFromPort(PORT_BTC_CONN, 0, 0, CODE_H23R0_LED_STATUS_OFF, 3);*/
 
 	/* There is no more data to return after this single string, so return pdFALSE. */
 	return pdFALSE;
@@ -611,6 +623,7 @@ static portBASE_TYPE btSetBaudrateCommand( int8_t *pcWriteBuffer, size_t xWriteB
 
 static portBASE_TYPE btScanCommand( int8_t *pcWriteBuffer, size_t xWriteBufferLen, const int8_t *pcCommandString )
 {
+	EventBits_t tEvBits;
 	/* Remove compile time warnings about unused parameters, and check the
 	write buffer is not NULL.  NOTE - for simplicity, this example assumes the
 	write buffer length is adequate, so does not check for buffer overflows. */
@@ -619,8 +632,22 @@ static portBASE_TYPE btScanCommand( int8_t *pcWriteBuffer, size_t xWriteBufferLe
 	configASSERT( pcWriteBuffer );
 
 	/* Scan */
-
-	/* sprintf( ( char * ) pcWriteBuffer, "Get information from BT900 module\r\n"); */
+	sprintf( (char *)pcWriteBuffer, "List all bluetooth devices:\r\n");
+  writePxMutex(PcPort, (char *)pcWriteBuffer, strlen((char *)pcWriteBuffer), cmd50ms, HAL_MAX_DELAY);
+	/* Send a control message to BT900 to run inquiry new bluetooth devices */
+	messageParams[0] = '*';
+	SendMessageFromPort(PORT_BTC_CONN, 0, 0, CODE_H23R0_SCAN_REQ, 4);
+	do {
+		tEvBits = xEventGroupWaitBits(handleUartTerminal, EVENT_BIT_0, pdTRUE, pdFALSE, cmd50ms);
+		if ((1 == stateTransmitBtToMcu) && (EVENT_BIT_0 && tEvBits))
+		{
+			writePxMutex(PcPort, (char *)pcWriteBuffer, strlen((char *)pcWriteBuffer), cmd50ms, HAL_MAX_DELAY);
+			sprintf( (char *)pcWriteBuffer, "\r\n");
+			stateTransmitBtToMcu = 0;
+		}
+	} while(2 != stateTransmitBtToMcu);
+	stateTransmitBtToMcu = 0;
+	sprintf( ( char * ) pcWriteBuffer, "\r\nDone.\r\n");
 
 	/* There is no more data to return after this single string, so return pdFALSE. */
 	return pdFALSE;

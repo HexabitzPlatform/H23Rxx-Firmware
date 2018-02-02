@@ -125,11 +125,11 @@ typedef enum
 } Module_Status;
 
 /* Indicator LED */
-#define _IND_LED_PORT		GPIOA
-#define _IND_LED_PIN		GPIO_PIN_11
+#define _IND_LED_PORT										GPIOA
+#define _IND_LED_PIN										GPIO_PIN_11
 
 /* Port-related Bluetooth - BT900 */
-#define PORT_BTC_CONN								P6
+#define PORT_BTC_CONN										P6
 
 /* Macros define to enable/disable debug information will be shown
  * on Terminal Application for Bluetooth
@@ -184,9 +184,12 @@ extern TaskHandle_t ControlBluetoothTaskHandle;
 #define CODE_H23R0_EVBTC_AUTHREQ          2314
 #define CODE_H23R0_EVBTC_PASSKEY          2315
 #define CODE_H23R0_SHOW_DEBUG_INFO        2316
-#define CODE_H23R0_SCAN_REQUIRE           2317
-#define CODE_H23R0_SCAN_RESPONSE          2317
-#define CODE_H23R0_CONNECT                2318
+#define CODE_H23R0_SCAN_REQ               2317
+#define CODE_H23R0_SCAN_RES               2318
+#define CODE_H23R0_CONNECT_REQ            2319
+#define CODE_H23R0_CONNECT_RES            2320
+#define CODE_H23R0_FINISH_TRANS           2321
+#define CODE_H23R0_UNKNOWN_CMD            2399
 
 /* -----------------------------------------------------------------------
 	|																APIs	 																 	|
