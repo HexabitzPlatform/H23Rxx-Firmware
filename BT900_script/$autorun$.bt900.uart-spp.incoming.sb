@@ -1,7 +1,7 @@
 // BitzOS (BOS) V0.1.4 - Copyright (C) 2017 Hexabitz
 //  All rights reserved
 //
-//  File Name     : ProcessMsgBt900.sb
+//  File Name     : $autorun$.bt900.uart-spp.incoming.sb
 //  Description   : Source code for control and process message on BT900 module.
 //
 //
@@ -29,7 +29,6 @@
 #define BTC_ADDR                          "001A7DDA7113"
 #define BTC_PIN                           "0000"
 
-
 #define BTC_SET_DISCOVERABLE              1
 #define BTC_SET_CONNECTABLE               1
 
@@ -55,11 +54,11 @@
 #define CODE_H23R0_EVBTC_AUTHREQ          2314
 #define CODE_H23R0_EVBTC_PASSKEY          2315
 #define CODE_H23R0_SHOW_DEBUG_INFO        2316
-#define CODE_H23R0_SCAN_REQ               2317
-#define CODE_H23R0_SCAN_RES               2318
-#define CODE_H23R0_CONNECT_REQ            2319
-#define CODE_H23R0_CONNECT_RES            2320
-#define CODE_H23R0_FINISH_TRANS           2321
+#define CODE_H23R0_SCAN_REQUIRE           2317
+#define CODE_H23R0_SCAN_RESPOND           2318
+#define CODE_H23R0_CONNECT_REQUIRE        2319
+#define CODE_H23R0_CONNECT_RESPOND        2320
+#define CODE_H23R0_FINISHED_TRANS         2321
 #define CODE_H23R0_UNKNOWN_CMD            2399
 
 
@@ -68,9 +67,11 @@
 // define code to trigger EVMSGAPP event
 #define BTC_APP_FINISH_TRANS_BT_MCU       100
 #define BTC_APP_CMD_SETTING_BT900         101
+#define BTC_APP_INVALID_PARAMETER         102
 
 // define timeout an inquiry
 #define BTC_TIMEOUT_INQUIRY               5 // second
+#define BTC_TIMER_BLINK_LED_INQ           0
 
 //******************************************************************************
 // Library Import
@@ -94,12 +95,29 @@ DIM StreamBridgeHandle
 // string for receive
 DIM MsgCommandReceive$
 
-DIM UartCmd$                 //CMD line from uart
-DIM StrRsp$ AS STRING        //Uart rx data is stored here
+DIM UartCmd$                  // CMD line from uart
+DIM StrRsp$ AS STRING         // Uart rx data is stored here
+
+DIM stateBlinkLed
 
 //******************************************************************************
 // Function and Subroutine definitions
 //******************************************************************************
+
+//------------------------------------------------------------------------------
+// Init global variable in smartBASIC program for BT900 module
+//------------------------------------------------------------------------------
+SUB CleanBtcData()
+  DIM index
+
+  FOR index = 0 TO IndexInqScan
+    Addr$[index] = ""
+    Rssi[index] = 0
+  NEXT
+  IndexGetName = 0
+  IndexInqScan = 0
+  stateBlinkLed = 1
+ENDSUB
 
 //------------------------------------------------------------------------------
 // Delay functions
@@ -109,7 +127,7 @@ SUB Delay_S(t as integer)
   t = t*1000
   tm = GetTickCount()
   WHILE (GetTickCount()-tm) < t
-    //Wait for t*1000 milliseconds
+    // Wait for t*1000 milliseconds
   ENDWHILE
 ENDSUB
 
@@ -117,7 +135,7 @@ SUB Delay_MS(t as integer)
   DIM tm
   tm = GetTickCount()
   WHILE (GetTickCount()-tm) < t
-    //Wait for t milliseconds
+    // Wait for t milliseconds
   ENDWHILE
 ENDSUB
 
@@ -152,6 +170,9 @@ SUB SendMsgToMcu(code, parameter$)
   _cmd$ = _code$ + parameter$
   lenCmd = StrLen(_cmd$)
   SPRINT #_lenCmd$, lenCmd
+  IF (lenCmd < 10) THEN
+    _lenCmd$ = "0" + _lenCmd$
+  ENDIF
 
   SendFrameMsgToMcu(_lenCmd$)
   SendFrameMsgToMcu(_cmd$)
@@ -238,18 +259,12 @@ FUNCTION SplitBosMsgFrame(byRef InputStr$, byRef Code, byRef Parameter$) AS INTE
 ENDFUNC lenPar
 
 //------------------------------------------------------------------------------
-// Init global variable in smartBASIC program for BT900 module
+// Blink led for running inquiry
 //------------------------------------------------------------------------------
-SUB CleanBtcData()
-  DIM index
-
-  FOR index = 0 TO IndexInqScan
-    Addr$[index] = ""
-    Rssi[index] = 0
-  NEXT
-  IndexGetName = 0
-  IndexInqScan = 0
-ENDSUB
+FUNCTION HandlerBlinkLedInq()
+  BlinkLed(2, 50)
+  TimerStart(BTC_TIMER_BLINK_LED_INQ, 100, 0)
+ENDFUNC stateBlinkLed
 
 //------------------------------------------------------------------------------
 // Start inquiry bluetooth devices
@@ -259,14 +274,38 @@ FUNCTION StartInqBtcDevices()
   CleanBtcData()
   // Start inquiry
   rc = BtcInquiryStart(BTC_TIMEOUT_INQUIRY) // timeout in seconds
+
+  ONEVENT EVTMR0                   CALL HandlerBlinkLedInq
+  TimerStart(BTC_TIMER_BLINK_LED_INQ, 100, 0)
 ENDFUNC 1
+
+//------------------------------------------------------------------------------
+// Setting bridge connection between UART - Wireless
+//------------------------------------------------------------------------------
+SUB SetBridgeConection(headle)
+  SPPHandleConnection = headle
+  // Bridge to UART
+  rc = StreamGetUartHandle(StreamUartHandle)
+  rc = StreamGetSPPHandle(SPPHandleConnection, StreamSPPHandle)
+  rc = StreamBridge(StreamUartHandle, StreamSPPHandle, StreamBridgeHandle)
+ENDSUB
 
 //------------------------------------------------------------------------------
 // Start connection with bluetooth's address to a device
 //------------------------------------------------------------------------------
-FUNCTION StartSppConnect(add$)
-  // Start inquiry
-  rc = BtcInquiryStart(BTC_TIMEOUT_INQUIRY) // timeout in seconds
+FUNCTION StartSppConnect(index$)
+  DIM _index
+  DIM _tAddr$
+
+  _index = StrValDec(index$)
+  IF (_index < IndexInqScan) THEN
+    _tAddr$ = Addr$[_index]
+    //Stop inquiring in case
+    rc = BtcInquiryCancel()
+    rc = BtcSppConnect(_tAddr$) // timeout in seconds
+  ELSE
+    rc = SendMsgApp(BTC_APP_INVALID_PARAMETER, _index)
+  ENDIF
 ENDFUNC 1
 
 //------------------------------------------------------------------------------
@@ -280,11 +319,11 @@ FUNCTION OnUartCmd()
 
   tLenPar = SplitBosMsgFrame(UartCmd$, tCode, tPar$)
   SELECT tCode
-    CASE CODE_H23R0_SCAN_REQ
+    CASE CODE_H23R0_SCAN_REQUIRE
       rc = StartInqBtcDevices()
       BREAK
 
-    CASE CODE_H23R0_CONNECT_REQ
+    CASE CODE_H23R0_CONNECT_REQUIRE
       rc = StartSppConnect(tPar$)
       BREAK
 
@@ -327,7 +366,7 @@ SUB OnStartup()
   AssertRC(rc, 5)
 
   // Set connectable so other devices can connect to this device
-  rc = BtcSetConnectable(BTC_SET_CONNECTABLE) // Connectable
+  rc = BtcSetConnectable(BTC_SET_CONNECTABLE)
   AssertRC(rc, 6)
 
   // Set pairable
@@ -397,7 +436,6 @@ ENDFUNC 1
 //------------------------------------------------------------------------------
 FUNCTION BtcTimeOutHeadler()
 
-  BlinkLed(10, 50) // number of blink: 10; time delay: 50
   IndexGetName = 0
   IF (6 == StrLen(Addr$[IndexGetName])) THEN
     rc = BtcQueryRemoteFriendlyName(Addr$[IndexGetName])
@@ -425,9 +463,9 @@ FUNCTION HandlerGetRemoteName(nStatus)
   IF (0 == nStatus) THEN
     SPRINT #_tIndex$, IndexGetName
     SPRINT #_tRssi$, Rssi[IndexGetName]
-    strTemp$ = "[" + _tIndex$ +"]\t"+ remoteNameDevice$ +"\t"+ _tRssi$
+    strTemp$ = "[" + _tIndex$ +"]\t"+ _tRssi$ +"\t" + remoteNameDevice$ + "\r\n"
     BlinkLed(2, 10) // number of blink: 2; time delay: 10 ms
-    SendMsgToMcu(CODE_H23R0_SCAN_RES, strTemp$)
+    SendMsgToMcu(CODE_H23R0_SCAN_RESPOND, strTemp$)
     IndexGetName = IndexGetName + 1
     IF (IndexGetName <= IndexInqScan) THEN
       rc = BtcQueryRemoteFriendlyName(Addr$[IndexGetName])
@@ -446,7 +484,7 @@ FUNCTION HandlerPairReq()
   DIM tempBtcAddr$
 
   rc = BtcGetPAIRRequestBDAddr(tempBtcAddr$)
-  IF 0 == rc THEN
+  IF (0 == rc) THEN
     rc = BtcSendPairResp(1)
   ENDIF
 
@@ -480,17 +518,23 @@ ENDFUNC 1
 // Handler event: EVSPPCONN
 //------------------------------------------------------------------------------
 FUNCTION SppConnect(headle, result)
-  SPPHandleConnection = headle
-  // Bridge to UART
-  rc = StreamGetUartHandle(StreamUartHandle)
-  rc = StreamGetSPPHandle(SPPHandleConnection, StreamSPPHandle)
-  rc = StreamBridge(StreamUartHandle, StreamSPPHandle, StreamBridgeHandle)
-ENDFUNC 1
+  DIM strTemp$
+  DIM _headle$
 
-//------------------------------------------------------------------------------
-// Handler
-//------------------------------------------------------------------------------
-FUNCTION HandlerSppDataRx()
+  SPRINT #_headle$, headle
+  IF (0 == result) THEN
+    SetBridgeConection(headle)
+    SPRINT #strTemp$, result
+  ELSE
+    strTemp$ = "1"
+  ENDIF
+
+  strTemp$ = strTemp$ + "\t" + _headle$
+  SendMsgToMcu(CODE_H23R0_CONNECT_RESPOND, strTemp$)
+  // send notification to app
+  BlinkLed(2, 10)
+  rc = SendMsgApp(BTC_APP_FINISH_TRANS_BT_MCU, 0)
+
 ENDFUNC 1
 
 //------------------------------------------------------------------------------
@@ -512,15 +556,22 @@ ENDFUNC 1
 // Handler
 //------------------------------------------------------------------------------
 FUNCTION CallMsgApp(msgID, cmd)
+  DIM _msgId$
   DIM _cmd$
+  DIM _str$
 
+  SPRINT #_msgId$, msgID
+  SPRINT #_cmd$, cmd
   IF (BTC_APP_FINISH_TRANS_BT_MCU == msgID) THEN
-    // debug info
-    _cmd$ = "Finished transmission data"
-    SendMsgToMcu(CODE_H23R0_FINISH_TRANS, _cmd$)
+    _str$ = "Info: MsgID = " + _msgId$ + "\tCMD = " + _cmd$
+    SendMsgToMcu(CODE_H23R0_FINISHED_TRANS, _str$)
+    TimerCancel(BTC_TIMER_BLINK_LED_INQ) // stop blink led status
+    stateBlinkLed = 0
+  ELSEIF (BTC_APP_INVALID_PARAMETER == msgID) THEN
+    _str$ = "Invalid input parameter:\t" + _cmd$
+    SendMsgToMcu(CODE_H23R0_UNKNOWN_CMD, _str$)
   ELSEIF (BTC_APP_CMD_SETTING_BT900 == msgID) THEN
-    // command
-    _cmd$ = "command"
+    _str$ = "command"
   ENDIF
 ENDFUNC 1
 
@@ -535,7 +586,6 @@ ONEVENT EVBTC_PIN_REQUEST           CALL HandlerPINReq
 ONEVENT EVBTC_PAIR_RESULT           CALL HandlerPairRes
 ONEVENT EVSPPCONN                   CALL SppConnect
 ONEVENT EVUARTRX                    CALL HandlerUartRx
-ONEVENT EVBTC_SPP_DATA_RECEIVED     CALL HandlerSppDataRx
 ONEVENT EVBTC_REMOTENAME_RECEIVED   CALL HandlerGetRemoteName
 ONEVENT EVMSGAPP                    CALL CallMsgApp
 
@@ -547,10 +597,6 @@ ELSE
   BlinkLed(2, 500)
 ENDIF
 
-//DIM strTest$
-//strTest$ = "[0]\tAnhVT6-StringTest\t-35"
-//SendMsgToMcu(CODE_H23R0_SCAN_INFO,strTest$)
-//SendMsgToMcu(CODE_H23R0_LED_STATUS_ON, strTest$)
 
 //------------------------------------------------------------------------------
 // Wait for a synchronous event.

@@ -140,7 +140,9 @@ typedef enum
 #define H23R0_UART_DEBUG_PORT           P2
 #define H23R0_SHOW_DEBUG_INFO_TERMINAL  0
 
-
+/* Macros define bit event group to trigger terminal uart port */
+#define EVENT_CLOSE_CONNECTION_BIT			( 1 << 0 ) /* close connection event */
+#define H23R0_BTC_CLOSE_CONNECTION			0xFF
 
 
 /* Export UART variables */
@@ -184,11 +186,11 @@ extern TaskHandle_t ControlBluetoothTaskHandle;
 #define CODE_H23R0_EVBTC_AUTHREQ          2314
 #define CODE_H23R0_EVBTC_PASSKEY          2315
 #define CODE_H23R0_SHOW_DEBUG_INFO        2316
-#define CODE_H23R0_SCAN_REQ               2317
-#define CODE_H23R0_SCAN_RES               2318
-#define CODE_H23R0_CONNECT_REQ            2319
-#define CODE_H23R0_CONNECT_RES            2320
-#define CODE_H23R0_FINISH_TRANS           2321
+#define CODE_H23R0_SCAN_REQUIRE           2317
+#define CODE_H23R0_SCAN_RESPOND           2318
+#define CODE_H23R0_CONNECT_REQUIRE        2319
+#define CODE_H23R0_CONNECT_RESPOND        2320
+#define CODE_H23R0_FINISHED_TRANS         2321
 #define CODE_H23R0_UNKNOWN_CMD            2399
 
 /* -----------------------------------------------------------------------
