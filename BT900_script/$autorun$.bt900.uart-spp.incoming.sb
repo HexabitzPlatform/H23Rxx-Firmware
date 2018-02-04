@@ -65,8 +65,8 @@
 #define BTC_SCAN_NUMBER_DEVICES           10
 
 // define code to trigger EVMSGAPP event
-#define BTC_APP_FINISH_TRANS_BT_MCU       100
-#define BTC_APP_CMD_SETTING_BT900         101
+#define BTC_APP_SCAN_BLUETOOTH_DEVICES    100
+#define BTC_APP_SPP_CONNECTED             101
 #define BTC_APP_INVALID_PARAMETER         102
 
 // define timeout an inquiry
@@ -84,6 +84,7 @@
 DIM rc
 DIM IndexInqScan
 DIM IndexGetName
+DIM NameDevices$[BTC_SCAN_NUMBER_DEVICES]
 DIM Addr$[BTC_SCAN_NUMBER_DEVICES]
 DIM Rssi[BTC_SCAN_NUMBER_DEVICES]
 
@@ -111,6 +112,7 @@ SUB CleanBtcData()
   DIM index
 
   FOR index = 0 TO IndexInqScan
+    NameDevices$[index] = ""
     Addr$[index] = ""
     Rssi[index] = 0
   NEXT
@@ -221,7 +223,7 @@ SUB HandlerOnErr()
     PRINT "\n OnErr - ";GetLastError();"\n" //Need to define frame msg error
   ENDIF
 ENDSUB
-ONERROR NEXT HandlerOnErr
+ONERROR REDO HandlerOnErr
 
 //------------------------------------------------------------------------------
 // For debugging to send a message to STM chips for processing error
@@ -230,7 +232,7 @@ ONERROR NEXT HandlerOnErr
 //------------------------------------------------------------------------------
 SUB AssertRC(rc,ln)
     IF ((0 != rc) && (0 != ENABLE_DEBUG_PRINTS)) THEN
-        //PRINT ln$
+        PRINT ln$
     ENDIF
 ENDSUB
 
@@ -276,6 +278,7 @@ FUNCTION StartInqBtcDevices()
   rc = BtcInquiryStart(BTC_TIMEOUT_INQUIRY) // timeout in seconds
 
   ONEVENT EVTMR0                   CALL HandlerBlinkLedInq
+  stateBlinkLed = 1
   TimerStart(BTC_TIMER_BLINK_LED_INQ, 100, 0)
 ENDFUNC 1
 
@@ -307,6 +310,61 @@ FUNCTION StartSppConnect(index$)
     rc = SendMsgApp(BTC_APP_INVALID_PARAMETER, _index)
   ENDIF
 ENDFUNC 1
+
+//------------------------------------------------------------------------------
+// Swap value of variables
+//------------------------------------------------------------------------------
+SUB SwapValue(index1, index2)
+  DIM tName$
+  DIM tAddr$
+  DIM tRssi
+
+  tName$ = NameDevices$[index1]
+  tAddr$ = Addr$[index1]
+  tRssi  = Rssi[index1]
+
+  NameDevices$[index1] = NameDevices$[index2]
+  Addr$[index1] = Addr$[index2]
+  Rssi[index1] = Rssi[index2]
+
+  NameDevices$[index2] = tName$
+  Addr$[index2] = tAddr$
+  Rssi[index2] = tRssi
+ENDSUB
+
+//------------------------------------------------------------------------------
+// Sort list bluetooth name following RSSI value
+//------------------------------------------------------------------------------
+SUB SortListBtcDevices(numberDevices)
+  DIM tIndex1
+  DIM tIndex2
+
+  FOR tIndex1 = 0 TO numberDevices
+    FOR tIndex2 = tIndex1 TO numberDevices
+      IF (Rssi[tIndex1] < Rssi[tIndex2]) THEN
+        SwapValue(tIndex1, tIndex2)
+      ENDIF
+    NEXT
+  NEXT
+ENDSUB
+
+//------------------------------------------------------------------------------
+// Send list bluetooth devices that have been received from calling "scan" command
+//------------------------------------------------------------------------------
+SUB SendListBtcDevices(numberDevices)
+  DIM index
+  DIM _index$
+  DIM _Rssi$
+  DIM strTemp$
+
+  FOR index = 0 TO numberDevices
+    SPRINT #_index$, index
+    SPRINT #_Rssi$, Rssi[index]
+    strTemp$ = "[" + _index$ +"]\t"+ _Rssi$ +"\t" + NameDevices$[index] + "\r\n"
+    SendMsgToMcu(CODE_H23R0_SCAN_RESPOND, strTemp$)
+    Delay_MS(50) //ms
+  NEXT
+ENDSUB
 
 //------------------------------------------------------------------------------
 // Process instruction that has been received via UART port
@@ -350,57 +408,43 @@ SUB OnStartup()
 
   // Setting D2 LED pin on the BT900
   rc = GpioSetFunc(LED_BTC_D2, 2, 0) // DIGITAL_OUT; Initial output to LOW
-  AssertRC(rc, 2)
 
   // Set friendly name
   strTempNameBt$ = BTC_FRIENDLY_NAME
   rc = BtcSetFriendlyName(strTempNameBt$)
-  AssertRC(rc, 3)
 
   // Configure discoverability mode
   rc = BtcDiscoveryConfig(0, 0)  // Discoverability type: General
-  AssertRC(rc, 4)
 
   // Set discoverable
   rc = BtcSetDiscoverable(BTC_SET_DISCOVERABLE, 180)
-  AssertRC(rc, 5)
 
   // Set connectable so other devices can connect to this device
   rc = BtcSetConnectable(BTC_SET_CONNECTABLE)
-  AssertRC(rc, 6)
 
   // Set pairable
   rc = BtcSetPairable(1)  // Not pairable
-  AssertRC(rc, 7)
 
   // Pairing information is stored in the bonding manager
   rc = BtcSavePairings(1)
-  AssertRC(rc, 8)
 
   // Set inquiry
   rc = BtcInquiryConfig(0, 0)   // Inquiry Type: General Inquiry
-  AssertRC(rc, 9)
   rc = BtcInquiryConfig(1, 1)   // Inquiry Mode: RSSI
-  AssertRC(rc, 10)
   rc = BtcInquiryConfig(2, BTC_SCAN_NUMBER_DEVICES) // Max number of inquiry responses to receive
-  AssertRC(rc, 11)
 
   //tempBtcAddr$ = BTC_ADDR
   //rc = BtcPair(tempBtcAddr$, 2)
-  //AssertRC(rc, 13)
 
   // Set friendly name
   strTempNameBt$ = BTC_FRIENDLY_NAME
   rc = BtcSetFriendlyName(strTempNameBt$)
-  AssertRC(rc, 14)
 
   // setting UART
   rc = UartOpen(UART_BAUDRATE, 0, 0, "CN81H")
-  AssertRC(rc, 15)
 
   // set SPP
   rc = BtcSppOpen(SPPHandleConnection)
-  AssertRC(rc, 16)
 
   CleanBtcData()
 
@@ -450,9 +494,6 @@ FUNCTION HandlerGetRemoteName(nStatus)
   DIM _remoteNameDevice$
   DIM tAddr$
   DIM tStatus
-  DIM _tIndex$
-  DIM _tRssi$
-  DIM strTemp$
 
   rc = BtcGetRemoteFriendlyName(_remoteNameDevice$, tAddr$, tStatus)
   IF (StrLen(_remoteNameDevice$) > MAX_SSID_SIZE) THEN
@@ -461,17 +502,14 @@ FUNCTION HandlerGetRemoteName(nStatus)
     remoteNameDevice$ = _remoteNameDevice$
   ENDIF
   IF (0 == nStatus) THEN
-    SPRINT #_tIndex$, IndexGetName
-    SPRINT #_tRssi$, Rssi[IndexGetName]
-    strTemp$ = "[" + _tIndex$ +"]\t"+ _tRssi$ +"\t" + remoteNameDevice$ + "\r\n"
-    BlinkLed(2, 10) // number of blink: 2; time delay: 10 ms
-    SendMsgToMcu(CODE_H23R0_SCAN_RESPOND, strTemp$)
+    NameDevices$[IndexGetName] = remoteNameDevice$
+
     IndexGetName = IndexGetName + 1
     IF (IndexGetName <= IndexInqScan) THEN
       rc = BtcQueryRemoteFriendlyName(Addr$[IndexGetName])
       IF (IndexGetName == IndexInqScan) THEN
         // send notification to app
-        rc = SendMsgApp(BTC_APP_FINISH_TRANS_BT_MCU, (IndexGetName - 1))
+        rc = SendMsgApp(BTC_APP_SCAN_BLUETOOTH_DEVICES, (IndexGetName - 1))
       ENDIF
     ENDIF
   ENDIF // 0 == nStatus
@@ -533,7 +571,7 @@ FUNCTION SppConnect(headle, result)
   SendMsgToMcu(CODE_H23R0_CONNECT_RESPOND, strTemp$)
   // send notification to app
   BlinkLed(2, 10)
-  rc = SendMsgApp(BTC_APP_FINISH_TRANS_BT_MCU, 0)
+  rc = SendMsgApp(BTC_APP_SPP_CONNECTED, 0)
 
 ENDFUNC 1
 
@@ -562,15 +600,27 @@ FUNCTION CallMsgApp(msgID, cmd)
 
   SPRINT #_msgId$, msgID
   SPRINT #_cmd$, cmd
-  IF (BTC_APP_FINISH_TRANS_BT_MCU == msgID) THEN
-    _str$ = "Info: MsgID = " + _msgId$ + "\tCMD = " + _cmd$
+  IF (BTC_APP_SCAN_BLUETOOTH_DEVICES == msgID) THEN
+    // Stop inquiring in case
+    rc = BtcInquiryCancel()
+    // sort data following RSSI value
+    SortListBtcDevices(IndexInqScan - 1)
+    // send list bluetooth devices to MCU
+    SendListBtcDevices(IndexInqScan - 1)
+    // Notify message to close transmission section
+    _str$ = "\t" + _msgId$ + "\t" + _cmd$
     SendMsgToMcu(CODE_H23R0_FINISHED_TRANS, _str$)
-    TimerCancel(BTC_TIMER_BLINK_LED_INQ) // stop blink led status
+    // stop blink led status
+    TimerCancel(BTC_TIMER_BLINK_LED_INQ)
     stateBlinkLed = 0
+  ELSEIF (BTC_APP_SPP_CONNECTED == msgID) THEN
+    // Notify message to close transmission section
+    _str$ = "\t" + _msgId$ + "\t" + _cmd$
+    SendMsgToMcu(CODE_H23R0_FINISHED_TRANS, _str$)
   ELSEIF (BTC_APP_INVALID_PARAMETER == msgID) THEN
     _str$ = "Invalid input parameter:\t" + _cmd$
     SendMsgToMcu(CODE_H23R0_UNKNOWN_CMD, _str$)
-  ELSEIF (BTC_APP_CMD_SETTING_BT900 == msgID) THEN
+  ELSE
     _str$ = "command"
   ENDIF
 ENDFUNC 1
