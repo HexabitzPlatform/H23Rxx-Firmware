@@ -125,11 +125,11 @@ typedef enum
 } Module_Status;
 
 /* Indicator LED */
-#define _IND_LED_PORT		GPIOA
-#define _IND_LED_PIN		GPIO_PIN_11
+#define _IND_LED_PORT										GPIOA
+#define _IND_LED_PIN										GPIO_PIN_11
 
 /* Port-related Bluetooth - BT900 */
-#define PORT_BTC_CONN								P6
+#define PORT_BTC_CONN										P6
 
 /* Macros define to enable/disable debug information will be shown
  * on Terminal Application for Bluetooth
@@ -140,7 +140,9 @@ typedef enum
 #define H23R0_UART_DEBUG_PORT           P2
 #define H23R0_SHOW_DEBUG_INFO_TERMINAL  0
 
-
+/* Macros define bit event group to trigger terminal uart port */
+#define EVENT_CLOSE_CONNECTION_BIT			( 1 << 0 ) /* close connection event */
+#define H23R0_BTC_CLOSE_CONNECTION			0xFF
 
 
 /* Export UART variables */
@@ -167,26 +169,29 @@ extern TaskHandle_t ControlBluetoothTaskHandle;
    -----------------------------------------------------------------------
 */
 
-#define	CODE_H23R0_GET_INFO								2300
-#define	CODE_H23R0_OTA_MODE								2301
-#define	CODE_H23R0_RUN_MODE								2302
-#define	CODE_H23R0_VSP_COMMAND_MODE				2303
-#define	CODE_H23R0_VSP_BRIDGE_MODE				2304
-#define	CODE_H23R0_SPP_MODE								2305
-#define CODE_H23R0_LED_STATUS_ON					2306
-#define CODE_H23R0_LED_STATUS_OFF					2307
-
-#define CODE_H23R0_BTC_DEL_ALL_DATA_SEG		2308
-
-#define CODE_H23R0_EVBTC_SPPCONN					2309
-#define CODE_H23R0_EVBTC_SPPDISCON				2310
-#define CODE_H23R0_EVBTC_PAIR_REQUEST			2311
-#define CODE_H23R0_EVBTC_PIN_REQUEST			2312
-#define CODE_H23R0_EVBTC_PAIR_RESULT			2313
-#define CODE_H23R0_EVBTC_AUTHREQ					2314
-#define CODE_H23R0_EVBTC_PASSKEY					2315
-#define CODE_H23R0_SHOW_DEBUG_INFO				2316
-
+#define CODE_H23R0_GET_INFO               2300
+#define CODE_H23R0_OTA_MODE               2301
+#define CODE_H23R0_RUN_MODE               2302
+#define CODE_H23R0_VSP_COMMAND_MODE       2303
+#define CODE_H23R0_VSP_BRIDGE_MODE        2304
+#define CODE_H23R0_SPP_MODE               2305
+#define CODE_H23R0_LED_STATUS_ON          2306
+#define CODE_H23R0_LED_STATUS_OFF         2307
+#define CODE_H23R0_BTC_DEL_ALL_DATA_SEG   2308
+#define CODE_H23R0_EVBTC_SPPCONN          2309
+#define CODE_H23R0_EVBTC_SPPDISCON        2310
+#define CODE_H23R0_EVBTC_PAIR_REQUEST     2311
+#define CODE_H23R0_EVBTC_PIN_REQUEST      2312
+#define CODE_H23R0_EVBTC_PAIR_RESULT      2313
+#define CODE_H23R0_EVBTC_AUTHREQ          2314
+#define CODE_H23R0_EVBTC_PASSKEY          2315
+#define CODE_H23R0_SHOW_DEBUG_INFO        2316
+#define CODE_H23R0_SCAN_REQUIRE           2317
+#define CODE_H23R0_SCAN_RESPOND           2318
+#define CODE_H23R0_CONNECT_REQUIRE        2319
+#define CODE_H23R0_CONNECT_RESPOND        2320
+#define CODE_H23R0_FINISHED_TRANS         2321
+#define CODE_H23R0_UNKNOWN_CMD            2399
 
 /* -----------------------------------------------------------------------
 	|																APIs	 																 	|
