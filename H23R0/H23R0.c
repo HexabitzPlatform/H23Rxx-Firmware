@@ -254,7 +254,7 @@ void ControlBluetoothTask(void * argument)
 
       case CODE_H23R0_CONNECT_RESPOND:
       	stateTransmitBtToMcu = 0;
-      	if (0x0 == cMessage[PORT_BTC_CONN-1][5])
+      	if ('0' == cMessage[PORT_BTC_CONN-1][5])
       	{
 					sprintf((char *)&tMessage[0], "Connected success ...\r\n");
       	}
