@@ -17,11 +17,12 @@
 			>> PB12 for BT900 Host_Wkup.
 
 		                                  | BT_MODE (nAutoRUN) |    BT_VSP (SIO_19 ) |
-		| Self-contained Run mode         |           0        |          0          |
-		| Interactive / development mode  |           1        |          0          |
-		| Over the Air (OTA)              |           0        |          0          |
+		| Self-contained Run mode         |           0        |          1          |
+		| Interactive / development mode  |           1        |          1          |
 		| VSP Bridge-to-UART mode         |           1        |          0          |
 		| VSP Command mode                |           0        |          0          |
+		| Over the Air (OTA)              |           0        |          0          |
+
 */
 
 /* Includes ------------------------------------------------------------------*/
@@ -500,7 +501,7 @@ void btResetBt900Module(void)
   BT_CLEAR_RST_PIN();
   Delay_ms_no_rtos(10);
   BT_SET_RST_PIN();
-  Delay_ms_no_rtos(1600); /* The BT900 module start-up time is ~1.6 seconds */
+  Delay_ms_no_rtos(2900); /* The BT900 module start-up time is ~1.6 seconds + ~1.3 s for radio initialisation */
 }
 
 /*-----------------------------------------------------------*/
@@ -509,6 +510,7 @@ void btResetBt900Module(void)
 */
 void btUpdateScript(void)
 {
+	btDisableHandshakeUart();
   BT_CLEAR_VSP_PIN();
   BT_CLEAR_MODE_PIN();
   btResetBt900Module();
@@ -522,7 +524,7 @@ void btRunScript(void)
 {
 	btDisableHandshakeUart();
 	//UpdateBaudrate(PORT_BTC_CONN, 921600); /* Normal baudrate for BT900 */
-	BT_CLEAR_VSP_PIN();
+	BT_SET_VSP_PIN();
 	BT_CLEAR_MODE_PIN();
 	btResetBt900Module();
 }
