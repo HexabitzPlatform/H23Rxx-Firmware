@@ -519,6 +519,9 @@ FUNCTION BtcTimeOutHeadler()
   IndexGetName = 0
   IF (6 == StrLen(Addr$[IndexGetName])) THEN
     rc = BtcQueryRemoteFriendlyName(Addr$[IndexGetName])
+  ELSE
+    // don't have any bluetooth device available
+    rc = SendMsgApp(BTC_APP_SCAN_BLUETOOTH_DEVICES, 0)
   ENDIF // 6 == StrLen(Addr$[IndexGetName])
 ENDFUNC 1
 
@@ -545,7 +548,7 @@ FUNCTION HandlerGetRemoteName(nStatus)
       rc = BtcQueryRemoteFriendlyName(Addr$[IndexGetName])
       IF (IndexGetName == IndexInqScan) THEN
         // send notification to app
-        rc = SendMsgApp(BTC_APP_SCAN_BLUETOOTH_DEVICES, (IndexGetName - 1))
+        rc = SendMsgApp(BTC_APP_SCAN_BLUETOOTH_DEVICES, IndexGetName)
       ENDIF
     ENDIF
   ENDIF // 0 == nStatus
@@ -637,10 +640,15 @@ FUNCTION CallMsgApp(msgID, cmd)
     tStopBlinkLedInq()
     // Stop inquiring in case
     rc = BtcInquiryCancel()
-    // sort data following RSSI value
-    SortListBtcDevices(IndexInqScan - 1)
-    // send list bluetooth devices to MCU
-    SendListBtcDevices(IndexInqScan - 1)
+    IF (cmd > 0) THEN
+      // sort data following RSSI value
+      SortListBtcDevices(IndexInqScan - 1)
+      // send list bluetooth devices to MCU
+      SendListBtcDevices(IndexInqScan - 1)
+    ELSE
+      _str$ = "No devices\r\n"
+      SendMsgToMcu(CODE_H23R0_SCAN_RESPOND, _str$)
+    ENDIF
     // Notify message to close transmission section
     _str$ = "\t" + _msgId$ + "\t" + _cmd$
     SendMsgToMcu(CODE_H23R0_FINISHED_TRANS, _str$)
