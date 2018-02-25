@@ -121,8 +121,8 @@ typedef enum
 	H23R0_ERR_WrongParams,
 	H23R0_RUN_VspCommandMode,
 	H23R0_RUN_VspBridgeToUartMode,
-	H23R0_RUN_UpdateScriptViaOta,
-	H23R0_RUN_UpdateScriptViaUart,
+	H23R0_RUN_DownloadScriptViaOta,
+	H23R0_RUN_DownloadScriptViaUart,
 	H23R0_ERROR = 255
 } Module_Status;
 
@@ -175,8 +175,8 @@ extern TaskHandle_t ControlBluetoothTaskHandle;
 */
 
 #define CODE_H23R0_GET_INFO               2300
-#define CODE_H23R0_UPDATE_SCRIPT_OTA      2301
-#define CODE_H23R0_UPDATE_SCRIPT_UART     2302
+#define CODE_H23R0_DOWNLOAD_SCRIPT_OTA    2301
+#define CODE_H23R0_DOWNLOAD_SCRIPT_UART   2302
 #define CODE_H23R0_RUN_AUTORUN_SCRIPT     2303
 #define CODE_H23R0_VSP_COMMAND_MODE       2304
 #define CODE_H23R0_VSP_BRIDGE_MODE        2305

@@ -68,7 +68,7 @@ void btWaitEventFinishTransmission(void);
 void btSendMsgToModule(uint8_t dst, uint16_t lenStr);
 HAL_StatusTypeDef btSendCommandToBtc(uint8_t *command);
 void btResetBt900Module(void);
-Module_Status btUpdateScript(Module_Status method, uint8_t port);
+Module_Status btDownloadScript(Module_Status method, uint8_t port);
 void btRunScript(void);
 Module_Status btVspMode(Module_Status inputVspMode);
 
@@ -76,7 +76,7 @@ Module_Status btVspMode(Module_Status inputVspMode);
 
 static portBASE_TYPE setBaudrateCommand( int8_t *pcWriteBuffer, size_t xWriteBufferLen, const int8_t *pcCommandString );
 static portBASE_TYPE btGetInfoCommand( int8_t *pcWriteBuffer, size_t xWriteBufferLen, const int8_t *pcCommandString );
-static portBASE_TYPE btUpdateScriptCommand( int8_t *pcWriteBuffer, size_t xWriteBufferLen, const int8_t *pcCommandString );
+static portBASE_TYPE btDownloadScriptCommand( int8_t *pcWriteBuffer, size_t xWriteBufferLen, const int8_t *pcCommandString );
 static portBASE_TYPE btRunScriptCommand( int8_t *pcWriteBuffer, size_t xWriteBufferLen, const int8_t *pcCommandString );
 static portBASE_TYPE btVspModeCommand( int8_t *pcWriteBuffer, size_t xWriteBufferLen, const int8_t *pcCommandString );
 static portBASE_TYPE btScanCommand( int8_t *pcWriteBuffer, size_t xWriteBufferLen, const int8_t *pcCommandString );
@@ -91,12 +91,12 @@ const CLI_Command_Definition_t btGetInfoCommandDefinition =
 	0 /* No parameters are expected. */
 };
 
-/* CLI command structure : bt-update-script */
-const CLI_Command_Definition_t btUpdateScriptCommandDefinition =
+/* CLI command structure : bt-download-script */
+const CLI_Command_Definition_t btDownloadScriptCommandDefinition =
 {
-	( const int8_t * ) "bt-update-script", /* The command string to type. */
-	( const int8_t * ) "bt-update-script:\r\n Command to update new $autorun$ script (1st parameter): ota or uart\r\n\r\n",
-	btUpdateScriptCommand, /* The function to run. */
+	( const int8_t * ) "bt-download-script", /* The command string to type. */
+	( const int8_t * ) "bt-download-script:\r\n Command to download new $autorun$ script (1st parameter): ota or uart\r\n\r\n",
+	btDownloadScriptCommand, /* The function to run. */
 	1 /* No parameters are expected. */
 };
 
@@ -316,12 +316,12 @@ Module_Status Module_MessagingTask(uint16_t code, uint8_t port, uint8_t src, uin
 		case CODE_H23R0_GET_INFO:
 			break;
 
-		case CODE_H23R0_UPDATE_SCRIPT_OTA:
-			btUpdateScript(H23R0_RUN_UpdateScriptViaOta, src);
+		case CODE_H23R0_DOWNLOAD_SCRIPT_OTA:
+			btDownloadScript(H23R0_RUN_DownloadScriptViaOta, src);
 			break;
 
-		case CODE_H23R0_UPDATE_SCRIPT_UART:
-			btUpdateScript(H23R0_RUN_UpdateScriptViaUart, src);
+		case CODE_H23R0_DOWNLOAD_SCRIPT_UART:
+			btDownloadScript(H23R0_RUN_DownloadScriptViaUart, src);
 			break;
 
 		case CODE_H23R0_RUN_AUTORUN_SCRIPT:
@@ -394,7 +394,7 @@ void RegisterModuleCLICommands(void)
 {
 	FreeRTOS_CLIRegisterCommand( &setBaudrateCommandDefinition);
 	FreeRTOS_CLIRegisterCommand( &btGetInfoCommandDefinition);
-	FreeRTOS_CLIRegisterCommand( &btUpdateScriptCommandDefinition);
+	FreeRTOS_CLIRegisterCommand( &btDownloadScriptCommandDefinition);
 	FreeRTOS_CLIRegisterCommand( &btRunScriptCommandDefinition);
 	FreeRTOS_CLIRegisterCommand( &btVspModeCommandDefinition);
 	FreeRTOS_CLIRegisterCommand( &btScanCommandDefinition);
@@ -424,9 +424,9 @@ void btDisableHandshakeUart(void)
 /*-----------------------------------------------------------*/
 
 /* --- DMA stream timer callback that will be called after
- * 		 timeout event in btUpdateScript() function
+ * 		 timeout event in btDownloadScript() function
 */
-void btcDmaStreamUpdateScript(TimerHandle_t xTimer)
+void btcDmaStreamDownloadScript(TimerHandle_t xTimer)
 {
 	uint32_t tid = 0;
 	
@@ -563,24 +563,27 @@ Module_Status btVspMode(Module_Status inputVspMode)
 
 /* --- Setting pins to update new script on bluetooth module
 */
-Module_Status btUpdateScript(Module_Status method, uint8_t port)
+Module_Status btDownloadScript(Module_Status method, uint8_t port)
 {
 	Module_Status result = H23R0_OK;
 	TimerHandle_t xTimer = NULL;
 
 	/*btDisableHandshakeUart();*/
     btEnableHandshakeUart();
-	if (H23R0_RUN_UpdateScriptViaOta == method)
+	if (H23R0_RUN_DownloadScriptViaOta == method)
 	{
 		/* update new smartBASIC script via ota method */
-		btVspMode(H23R0_RUN_VspCommandMode);
+		/*btVspMode(H23R0_RUN_VspCommandMode);*/
+		btVspMode(H23R0_RUN_VspBridgeToUartMode);
 	}
-	else if (H23R0_RUN_UpdateScriptViaUart == method)
+	else if (H23R0_RUN_DownloadScriptViaUart == method)
 	{
 		/* update new smartBASIC script via uart method */
 		stateTransmitBtToMcu = 0;
 		/* setup pin to control BT900 module */
-		btVspMode(H23R0_RUN_VspCommandMode);
+		/*btVspMode(H23R0_RUN_VspCommandMode);*/
+		btVspMode(H23R0_RUN_VspBridgeToUartMode);
+        
 
 		/* setup DMA stream */
 		PortPortDMA1_Setup(GetUart(PORT_BTC_CONN), GetUart(port), 1);
@@ -589,7 +592,7 @@ Module_Status btUpdateScript(Module_Status method, uint8_t port)
 		PortPortDMA3_Setup(GetUart(port), GetUart(PORT_BTC_CONN), 1);
 		DMAStream3total = H23R0_MAX_NUMBER_OF_DATA_DMA;
 		/* Create a timeout timer */
-		xTimer = xTimerCreate( "StreamTimer", pdMS_TO_TICKS(10000), pdFALSE, ( void * ) 23, btcDmaStreamUpdateScript );
+		xTimer = xTimerCreate( "StreamTimer", pdMS_TO_TICKS(10000), pdFALSE, ( void * ) 23, btcDmaStreamDownloadScript );
 		/* Start the timeout timer */
 		xTimerStart( xTimer, portMAX_DELAY );
 	}
@@ -664,7 +667,7 @@ static portBASE_TYPE btGetInfoCommand( int8_t *pcWriteBuffer, size_t xWriteBuffe
 	return pdFALSE;
 }
 
-static portBASE_TYPE btUpdateScriptCommand( int8_t *pcWriteBuffer, size_t xWriteBufferLen, const int8_t *pcCommandString )
+static portBASE_TYPE btDownloadScriptCommand( int8_t *pcWriteBuffer, size_t xWriteBufferLen, const int8_t *pcCommandString )
 {
 	Module_Status result = H23R0_OK;
 	int8_t *pcParameterString1;
@@ -681,18 +684,18 @@ static portBASE_TYPE btUpdateScriptCommand( int8_t *pcWriteBuffer, size_t xWrite
 	pcParameterString1 = ( int8_t * ) FreeRTOS_CLIGetParameter (pcCommandString, 1, &xParameterStringLength1);
 	if (!strncmp((const char *)pcParameterString1, "ota", 3))
 	{
-		sprintf( ( char * ) pcWriteBuffer, "Updating new smartBASIC program via OTA ...\r\n");
+		sprintf( ( char * ) pcWriteBuffer, "Downloading new smartBASIC program to BT900 via OTA ...\r\n");
 		writePxMutex(PcPort, (char *)pcWriteBuffer, strlen((char *)pcWriteBuffer), cmd50ms, HAL_MAX_DELAY);
 		/* Do something to update script command on the BT900 */
-		result = btUpdateScript(H23R0_RUN_UpdateScriptViaOta, PcPort);
+		result = btDownloadScript(H23R0_RUN_DownloadScriptViaOta, PcPort);
 	}
 	else if (!strncmp((const char *)pcParameterString1, "uart", 4))
 	{
-		sprintf( ( char * ) pcWriteBuffer, "Updating new smartBASIC program via UART ...\r\n");
+		sprintf( ( char * ) pcWriteBuffer, "Downloading new smartBASIC program to BT900 via UART ...\r\n");
 		writePxMutex(PcPort, (char *)pcWriteBuffer, strlen((char *)pcWriteBuffer), cmd50ms, HAL_MAX_DELAY);
-		result = btUpdateScript(H23R0_RUN_UpdateScriptViaUart, PcPort);
+		result = btDownloadScript(H23R0_RUN_DownloadScriptViaUart, PcPort);
 		/* message to show on terminal app */
-		sprintf( ( char * ) pcWriteBuffer, "Ready upload smartBASIC file\r\n");
+		sprintf( ( char * ) pcWriteBuffer, "Ready download smartBASIC file\r\n");
 		writePxMutex(PcPort, (char *)pcWriteBuffer, strlen((char *)pcWriteBuffer), cmd50ms, HAL_MAX_DELAY);
 		/* waiting event finish transmission */
 		btWaitEventFinishTransmission();
