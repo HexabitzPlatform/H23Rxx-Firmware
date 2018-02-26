@@ -17,11 +17,12 @@
 			>> PB12 for BT900 Host_Wkup.
 
 		                                  | BT_MODE (nAutoRUN) |    BT_VSP (SIO_19 ) |
-		| Self-contained Run mode         |           0        |          0          |
-		| Interactive / development mode  |           1        |          0          |
-		| Over the Air (OTA)              |           0        |          0          |
+		| Self-contained Run mode         |           0        |          1          |
+		| Interactive / development mode  |           1        |          1          |
 		| VSP Bridge-to-UART mode         |           1        |          0          |
 		| VSP Command mode                |           0        |          0          |
+		| Over the Air (OTA)              |           0        |          0          |
+
 */
 
 /* Includes ------------------------------------------------------------------*/
@@ -67,17 +68,17 @@ void btWaitEventFinishTransmission(void);
 void btSendMsgToModule(uint8_t dst, uint16_t lenStr);
 HAL_StatusTypeDef btSendCommandToBtc(uint8_t *command);
 void btResetBt900Module(void);
-void btUpdateScript(void);
+Module_Status btDownloadScript(Module_Status method, uint8_t port);
 void btRunScript(void);
-Module_Status btVspMode(int8_t inputVspMode);
+Module_Status btVspMode(Module_Status inputVspMode);
 
 /* Create CLI commands --------------------------------------------------------*/
 
+static portBASE_TYPE setBaudrateCommand( int8_t *pcWriteBuffer, size_t xWriteBufferLen, const int8_t *pcCommandString );
 static portBASE_TYPE btGetInfoCommand( int8_t *pcWriteBuffer, size_t xWriteBufferLen, const int8_t *pcCommandString );
-static portBASE_TYPE btUpdateScriptCommand( int8_t *pcWriteBuffer, size_t xWriteBufferLen, const int8_t *pcCommandString );
+static portBASE_TYPE btDownloadScriptCommand( int8_t *pcWriteBuffer, size_t xWriteBufferLen, const int8_t *pcCommandString );
 static portBASE_TYPE btRunScriptCommand( int8_t *pcWriteBuffer, size_t xWriteBufferLen, const int8_t *pcCommandString );
 static portBASE_TYPE btVspModeCommand( int8_t *pcWriteBuffer, size_t xWriteBufferLen, const int8_t *pcCommandString );
-static portBASE_TYPE btSetBaudrateCommand( int8_t *pcWriteBuffer, size_t xWriteBufferLen, const int8_t *pcCommandString );
 static portBASE_TYPE btScanCommand( int8_t *pcWriteBuffer, size_t xWriteBufferLen, const int8_t *pcCommandString );
 static portBASE_TYPE btConnectCommand( int8_t *pcWriteBuffer, size_t xWriteBufferLen, const int8_t *pcCommandString );
 
@@ -90,13 +91,13 @@ const CLI_Command_Definition_t btGetInfoCommandDefinition =
 	0 /* No parameters are expected. */
 };
 
-/* CLI command structure : bt-update-script */
-const CLI_Command_Definition_t btUpdateScriptCommandDefinition =
+/* CLI command structure : bt-download-script */
+const CLI_Command_Definition_t btDownloadScriptCommandDefinition =
 {
-	( const int8_t * ) "bt-update-script", /* The command string to type. */
-	( const int8_t * ) "bt-update-script:\r\n Command to update new $autorun$ script\r\n\r\n",
-	btUpdateScriptCommand, /* The function to run. */
-	0 /* No parameters are expected. */
+	( const int8_t * ) "bt-download-script", /* The command string to type. */
+	( const int8_t * ) "bt-download-script:\r\n Command to download new $autorun$ script (1st parameter): ota or uart\r\n\r\n",
+	btDownloadScriptCommand, /* The function to run. */
+	1 /* No parameters are expected. */
 };
 
 /* CLI command structure : bt-run-script */
@@ -117,13 +118,13 @@ const CLI_Command_Definition_t btVspModeCommandDefinition =
 	1 /* No parameters are expected. */
 };
 
-/* CLI command structure : bt-set-baudrate */
-const CLI_Command_Definition_t btSetBaudrateCommandDefinition =
+/* CLI command structure : set-baudrate */
+const CLI_Command_Definition_t setBaudrateCommandDefinition =
 {
-	( const int8_t * ) "bt-set-baudrate", /* The command string to type. */
-	( const int8_t * ) "bt-set-baudrate:\r\n Set connection speed between MCU and Bluetooth module \r\n\r\n",
-	btSetBaudrateCommand, /* The function to run. */
-	1 /* One parameter is expected. */
+	( const int8_t * ) "set-baudrate", /* The command string to type. */
+	( const int8_t * ) "set-baudrate:\r\n Set baudrate for UART \r\n\t(1st parameter): P1 to P6\r\n\t(2nd parameter): 115200 or 921600\r\n\r\n",
+	setBaudrateCommand, /* The function to run. */
+	2 /* One parameter is expected. */
 };
 
 /* CLI command structure : scan */
@@ -315,11 +316,15 @@ Module_Status Module_MessagingTask(uint16_t code, uint8_t port, uint8_t src, uin
 		case CODE_H23R0_GET_INFO:
 			break;
 
-		case CODE_H23R0_OTA_MODE:
-			btUpdateScript();
+		case CODE_H23R0_DOWNLOAD_SCRIPT_OTA:
+			btDownloadScript(H23R0_RUN_DownloadScriptViaOta, src);
 			break;
 
-		case CODE_H23R0_RUN_MODE:
+		case CODE_H23R0_DOWNLOAD_SCRIPT_UART:
+			btDownloadScript(H23R0_RUN_DownloadScriptViaUart, src);
+			break;
+
+		case CODE_H23R0_RUN_AUTORUN_SCRIPT:
 			btRunScript();
 			break;
 
@@ -387,11 +392,11 @@ Module_Status Module_MessagingTask(uint16_t code, uint8_t port, uint8_t src, uin
 */
 void RegisterModuleCLICommands(void)
 {
+	FreeRTOS_CLIRegisterCommand( &setBaudrateCommandDefinition);
 	FreeRTOS_CLIRegisterCommand( &btGetInfoCommandDefinition);
-	FreeRTOS_CLIRegisterCommand( &btUpdateScriptCommandDefinition);
+	FreeRTOS_CLIRegisterCommand( &btDownloadScriptCommandDefinition);
 	FreeRTOS_CLIRegisterCommand( &btRunScriptCommandDefinition);
 	FreeRTOS_CLIRegisterCommand( &btVspModeCommandDefinition);
-	FreeRTOS_CLIRegisterCommand( &btSetBaudrateCommandDefinition);
 	FreeRTOS_CLIRegisterCommand( &btScanCommandDefinition);
 	FreeRTOS_CLIRegisterCommand( &btConnectCommandDefinition);
 }
@@ -414,6 +419,28 @@ void btDisableHandshakeUart(void)
 {
 	__HAL_UART_HWCONTROL_CTS_DISABLE(GetUart(PORT_BTC_CONN));
 	__HAL_UART_HWCONTROL_RTS_DISABLE(GetUart(PORT_BTC_CONN));
+}
+
+/*-----------------------------------------------------------*/
+
+/* --- DMA stream timer callback that will be called after
+ * 		 timeout event in btDownloadScript() function
+*/
+void btcDmaStreamDownloadScript(TimerHandle_t xTimer)
+{
+	uint32_t tid = 0;
+	
+	/* close DMA stream */
+	tid = ( uint32_t ) pvTimerGetTimerID( xTimer );
+	if (23 == tid)
+	{
+		StopPortPortDMA1();
+		StopPortPortDMA3();
+	}
+
+	/* create event to close update script command */
+	stateTransmitBtToMcu = H23R0_BTC_CLOSE_CONNECTION;
+	xEventGroupSetBits(handleUartTerminal, EVENT_CLOSE_CONNECTION_BIT);
 }
 
 /*-----------------------------------------------------------*/
@@ -500,38 +527,14 @@ void btResetBt900Module(void)
   BT_CLEAR_RST_PIN();
   Delay_ms_no_rtos(10);
   BT_SET_RST_PIN();
-  Delay_ms_no_rtos(1600); /* The BT900 module start-up time is ~1.6 seconds */
-}
-
-/*-----------------------------------------------------------*/
-
-/* --- Setting pins to update new script on bluetooth module
-*/
-void btUpdateScript(void)
-{
-  BT_CLEAR_VSP_PIN();
-  BT_CLEAR_MODE_PIN();
-  btResetBt900Module();
-}
-
-/*-----------------------------------------------------------*/
-
-/* --- Setting pins to run automatically $autorun$ script in bluetooth module
-*/
-void btRunScript(void)
-{
-	btDisableHandshakeUart();
-	//UpdateBaudrate(PORT_BTC_CONN, 921600); /* Normal baudrate for BT900 */
-	BT_CLEAR_VSP_PIN();
-	BT_CLEAR_MODE_PIN();
-	btResetBt900Module();
+  Delay_ms_no_rtos(2900); /* The BT900 module start-up time is ~1.6 seconds + ~1.3 s for radio initialisation */
 }
 
 /*-----------------------------------------------------------*/
 
 /* --- Setting pins to run VSP mode
 */
-Module_Status btVspMode(int8_t inputVspMode)
+Module_Status btVspMode(Module_Status inputVspMode)
 {
 	Module_Status result = H23R0_OK;
 
@@ -554,6 +557,63 @@ Module_Status btVspMode(int8_t inputVspMode)
 		result = H23R0_ERR_WrongParams;
 	}
 	return result;
+}
+
+/*-----------------------------------------------------------*/
+
+/* --- Setting pins to update new script on bluetooth module
+*/
+Module_Status btDownloadScript(Module_Status method, uint8_t port)
+{
+	Module_Status result = H23R0_OK;
+	TimerHandle_t xTimer = NULL;
+
+	/*btDisableHandshakeUart();*/
+    btEnableHandshakeUart();
+	if (H23R0_RUN_DownloadScriptViaOta == method)
+	{
+		/* update new smartBASIC script via ota method */
+		/*btVspMode(H23R0_RUN_VspCommandMode);*/
+		btVspMode(H23R0_RUN_VspBridgeToUartMode);
+	}
+	else if (H23R0_RUN_DownloadScriptViaUart == method)
+	{
+		/* update new smartBASIC script via uart method */
+		stateTransmitBtToMcu = 0;
+		/* setup pin to control BT900 module */
+		/*btVspMode(H23R0_RUN_VspCommandMode);*/
+		btVspMode(H23R0_RUN_VspBridgeToUartMode);
+        
+
+		/* setup DMA stream */
+		PortPortDMA1_Setup(GetUart(PORT_BTC_CONN), GetUart(port), 1);
+		DMAStream1total = H23R0_MAX_NUMBER_OF_DATA_DMA;
+
+		PortPortDMA3_Setup(GetUart(port), GetUart(PORT_BTC_CONN), 1);
+		DMAStream3total = H23R0_MAX_NUMBER_OF_DATA_DMA;
+		/* Create a timeout timer */
+		xTimer = xTimerCreate( "StreamTimer", pdMS_TO_TICKS(10000), pdFALSE, ( void * ) 23, btcDmaStreamDownloadScript );
+		/* Start the timeout timer */
+		xTimerStart( xTimer, portMAX_DELAY );
+	}
+	else
+	{
+		result = H23R0_ERR_WrongParams;
+	}
+  return result;
+}
+
+/*-----------------------------------------------------------*/
+
+/* --- Setting pins to run automatically $autorun$ script in bluetooth module
+*/
+void btRunScript(void)
+{
+	btDisableHandshakeUart();
+	//UpdateBaudrate(PORT_BTC_CONN, 921600); /* Normal baudrate for BT900 */
+	BT_SET_VSP_PIN();
+	BT_CLEAR_MODE_PIN();
+	btResetBt900Module();
 }
 
 /*-----------------------------------------------------------*/
@@ -607,8 +667,12 @@ static portBASE_TYPE btGetInfoCommand( int8_t *pcWriteBuffer, size_t xWriteBuffe
 	return pdFALSE;
 }
 
-static portBASE_TYPE btUpdateScriptCommand( int8_t *pcWriteBuffer, size_t xWriteBufferLen, const int8_t *pcCommandString )
+static portBASE_TYPE btDownloadScriptCommand( int8_t *pcWriteBuffer, size_t xWriteBufferLen, const int8_t *pcCommandString )
 {
+	Module_Status result = H23R0_OK;
+	int8_t *pcParameterString1;
+	portBASE_TYPE xParameterStringLength1 = 0;
+
 	/* Remove compile time warnings about unused parameters, and check the
 	write buffer is not NULL.  NOTE - for simplicity, this example assumes the
 	write buffer length is adequate, so does not check for buffer overflows. */
@@ -616,13 +680,45 @@ static portBASE_TYPE btUpdateScriptCommand( int8_t *pcWriteBuffer, size_t xWrite
 	( void ) xWriteBufferLen;
 	configASSERT( pcWriteBuffer );
 
-	/* Do something to update script command on the BT900 */
-	btUpdateScript();
-	sprintf( ( char * ) pcWriteBuffer, "Updating new bt script via OTA ...\r\n");
+	/* Obtain the 1st parameter string define VSP mode on BT900 */
+	pcParameterString1 = ( int8_t * ) FreeRTOS_CLIGetParameter (pcCommandString, 1, &xParameterStringLength1);
+	if (!strncmp((const char *)pcParameterString1, "ota", 3))
+	{
+		sprintf( ( char * ) pcWriteBuffer, "Downloading new smartBASIC program to BT900 via OTA ...\r\n");
+		writePxMutex(PcPort, (char *)pcWriteBuffer, strlen((char *)pcWriteBuffer), cmd50ms, HAL_MAX_DELAY);
+		/* Do something to update script command on the BT900 */
+		result = btDownloadScript(H23R0_RUN_DownloadScriptViaOta, PcPort);
+	}
+	else if (!strncmp((const char *)pcParameterString1, "uart", 4))
+	{
+		sprintf( ( char * ) pcWriteBuffer, "Downloading new smartBASIC program to BT900 via UART ...\r\n");
+		writePxMutex(PcPort, (char *)pcWriteBuffer, strlen((char *)pcWriteBuffer), cmd50ms, HAL_MAX_DELAY);
+		result = btDownloadScript(H23R0_RUN_DownloadScriptViaUart, PcPort);
+		/* message to show on terminal app */
+		sprintf( ( char * ) pcWriteBuffer, "Ready download smartBASIC file\r\n");
+		writePxMutex(PcPort, (char *)pcWriteBuffer, strlen((char *)pcWriteBuffer), cmd50ms, HAL_MAX_DELAY);
+		/* waiting event finish transmission */
+		btWaitEventFinishTransmission();
+	}
+	else
+	{
+		result = H23R0_ERR_WrongParams;
+	}
+
+	if (H23R0_ERR_WrongParams == result)
+	{
+		sprintf( ( char * ) pcWriteBuffer, "Wrong value of input parameter\r\n");
+		writePxMutex(PcPort, (char *)pcWriteBuffer, strlen((char *)pcWriteBuffer), cmd50ms, HAL_MAX_DELAY);
+	}
+
+	sprintf( ( char * ) pcWriteBuffer, "\r\nDone\r\n");
+	writePxMutex(PcPort, (char *)pcWriteBuffer, strlen((char *)pcWriteBuffer), cmd50ms, HAL_MAX_DELAY);
+	/* clean terminal output */
+	memset((char *)pcWriteBuffer, 0, configCOMMAND_INT_MAX_OUTPUT_SIZE);
+	sprintf((char *)pcWriteBuffer, "\r\n");
 
 	/* There is no more data to return after this single string, so return pdFALSE. */
 	return pdFALSE;
-
 }
 
 static portBASE_TYPE btRunScriptCommand( int8_t *pcWriteBuffer, size_t xWriteBufferLen, const int8_t *pcCommandString )
@@ -640,7 +736,6 @@ static portBASE_TYPE btRunScriptCommand( int8_t *pcWriteBuffer, size_t xWriteBuf
 
 	/* There is no more data to return after this single string, so return pdFALSE. */
 	return pdFALSE;
-
 }
 
 static portBASE_TYPE btVspModeCommand( int8_t *pcWriteBuffer, size_t xWriteBufferLen, const int8_t *pcCommandString )
@@ -665,7 +760,7 @@ static portBASE_TYPE btVspModeCommand( int8_t *pcWriteBuffer, size_t xWriteBuffe
 		result = btVspMode(H23R0_RUN_VspCommandMode);
 		sprintf( ( char * ) pcWriteBuffer, ( char * ) pcMessageOK, "VSP command mode\r\n");
 	}
-	else if (!strncmp((const char *)pcParameterString1, "bridge", 11))
+	else if (!strncmp((const char *)pcParameterString1, "bridge", 6))
 	{
 		result = btVspMode(H23R0_RUN_VspBridgeToUartMode);
 		sprintf( ( char * ) pcWriteBuffer, ( char * ) pcMessageOK, "VSP Bridge-to-UART mode\r\n");
@@ -685,14 +780,19 @@ static portBASE_TYPE btVspModeCommand( int8_t *pcWriteBuffer, size_t xWriteBuffe
 	return pdFALSE;
 }
 
-static portBASE_TYPE btSetBaudrateCommand( int8_t *pcWriteBuffer, size_t xWriteBufferLen, const int8_t *pcCommandString )
+static portBASE_TYPE setBaudrateCommand( int8_t *pcWriteBuffer, size_t xWriteBufferLen, const int8_t *pcCommandString )
 {
 	Module_Status result = H23R0_OK;
 
 	int8_t *pcParameterString1;
+	int8_t *pcParameterString2;
 	portBASE_TYPE xParameterStringLength1 = 0;
-	static const int8_t *pcMessageOK = ( int8_t * ) "Started %s\r\n";
+	portBASE_TYPE xParameterStringLength2 = 0;
+	static const int8_t *pcMessageOK = ( int8_t * ) "Set new baudrate: %d for P%d\r\n";
 	static const int8_t *pcMessageWrongParam = ( int8_t * ) "Wrong parameter!\r\n";
+    
+    uint8_t port;
+    uint32_t baudrate;
 
 	/* Remove compile time warnings about unused parameters, and check the
 	write buffer is not NULL.  NOTE - for simplicity, this example assumes the
@@ -700,21 +800,49 @@ static portBASE_TYPE btSetBaudrateCommand( int8_t *pcWriteBuffer, size_t xWriteB
 	( void ) xWriteBufferLen;
 	configASSERT( pcWriteBuffer );
 
-	/* Obtain the 1st parameter string define VSP mode on BT900 */
+	/* 1st parameter for naming of uart port: P1 to P6 */
 	pcParameterString1 = ( int8_t * ) FreeRTOS_CLIGetParameter (pcCommandString, 1, &xParameterStringLength1);
-	if (!strncmp((const char *)pcParameterString1, "921600", 7))
+	if (!strncmp((const char *)pcParameterString1, "p1", 2))
 	{
-		UpdateBaudrate(PORT_BTC_CONN, 921600); /* Normal baudrate for BT900 */
-		sprintf( ( char * ) pcWriteBuffer, ( char * ) pcMessageOK, "Baudrate: 921600\r\n");
+        port = P1;
 	}
-	else if (!strncmp((const char *)pcParameterString1, "115200", 11))
+	else if (!strncmp((const char *)pcParameterString1, "p2", 2))
 	{
-		UpdateBaudrate(PORT_BTC_CONN, 115200); /* Normal baudrate for BT900 */
-		sprintf( ( char * ) pcWriteBuffer, ( char * ) pcMessageOK, "Baudrate: 115200\r\n");
+        port = P2;
+	}
+	else if (!strncmp((const char *)pcParameterString1, "p3", 2))
+	{
+        port = P3;
+	}
+	else if (!strncmp((const char *)pcParameterString1, "p4", 2))
+	{
+        port = P4;
+	}
+	else if (!strncmp((const char *)pcParameterString1, "p5", 2))
+	{
+        port = P5;
+	}
+	else if (!strncmp((const char *)pcParameterString1, "p6", 2))
+	{
+        port = P6;
 	}
 	else
 	{
 		result = H23R0_ERR_WrongParams;
+	}
+    /* 2nd parameter for speed: 115200 or 921600 */
+	pcParameterString2 = ( int8_t * ) FreeRTOS_CLIGetParameter (pcCommandString, 2, &xParameterStringLength2);
+	if (!strncmp((const char *)pcParameterString2, "921600", 6))
+	{
+        baudrate = 921600;
+	}
+	else if (!strncmp((const char *)pcParameterString2, "115200", 6))
+	{
+        baudrate = 115200;
+	}
+	else
+	{
+		result |= H23R0_ERR_WrongParams;
 	}
 
 	/* Respond to the command */
@@ -722,6 +850,11 @@ static portBASE_TYPE btSetBaudrateCommand( int8_t *pcWriteBuffer, size_t xWriteB
 	{
 		strcpy( ( char * ) pcWriteBuffer, ( char * ) pcMessageWrongParam );
 	}
+    else
+    {
+		UpdateBaudrate(port, baudrate);
+		sprintf( ( char * ) pcWriteBuffer, ( char * ) pcMessageOK, baudrate, port);
+    }
 
 	/* There is no more data to return after this single string, so return pdFALSE. */
 	return pdFALSE;

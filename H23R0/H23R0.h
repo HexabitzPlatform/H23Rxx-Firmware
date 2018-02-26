@@ -121,6 +121,8 @@ typedef enum
 	H23R0_ERR_WrongParams,
 	H23R0_RUN_VspCommandMode,
 	H23R0_RUN_VspBridgeToUartMode,
+	H23R0_RUN_DownloadScriptViaOta,
+	H23R0_RUN_DownloadScriptViaUart,
 	H23R0_ERROR = 255
 } Module_Status;
 
@@ -141,8 +143,11 @@ typedef enum
 #define H23R0_SHOW_DEBUG_INFO_TERMINAL  0
 
 /* Macros define bit event group to trigger terminal uart port */
-#define EVENT_CLOSE_CONNECTION_BIT			( 1 << 0 ) /* close connection event */
-#define H23R0_BTC_CLOSE_CONNECTION			0xFF
+#define EVENT_CLOSE_CONNECTION_BIT      ( 1 << 0 ) /* close connection event */
+#define H23R0_BTC_CLOSE_CONNECTION      0xFF
+
+/* Macros define maximum number of data to transfer (0 up to 65535)*/
+#define H23R0_MAX_NUMBER_OF_DATA_DMA    40000
 
 
 /* Export UART variables */
@@ -170,27 +175,28 @@ extern TaskHandle_t ControlBluetoothTaskHandle;
 */
 
 #define CODE_H23R0_GET_INFO               2300
-#define CODE_H23R0_OTA_MODE               2301
-#define CODE_H23R0_RUN_MODE               2302
-#define CODE_H23R0_VSP_COMMAND_MODE       2303
-#define CODE_H23R0_VSP_BRIDGE_MODE        2304
-#define CODE_H23R0_SPP_MODE               2305
-#define CODE_H23R0_LED_STATUS_ON          2306
-#define CODE_H23R0_LED_STATUS_OFF         2307
-#define CODE_H23R0_BTC_DEL_ALL_DATA_SEG   2308
-#define CODE_H23R0_EVBTC_SPPCONN          2309
-#define CODE_H23R0_EVBTC_SPPDISCON        2310
-#define CODE_H23R0_EVBTC_PAIR_REQUEST     2311
-#define CODE_H23R0_EVBTC_PIN_REQUEST      2312
-#define CODE_H23R0_EVBTC_PAIR_RESULT      2313
-#define CODE_H23R0_EVBTC_AUTHREQ          2314
-#define CODE_H23R0_EVBTC_PASSKEY          2315
-#define CODE_H23R0_SHOW_DEBUG_INFO        2316
-#define CODE_H23R0_SCAN_REQUIRE           2317
-#define CODE_H23R0_SCAN_RESPOND           2318
-#define CODE_H23R0_CONNECT_REQUIRE        2319
-#define CODE_H23R0_CONNECT_RESPOND        2320
-#define CODE_H23R0_FINISHED_TRANS         2321
+#define CODE_H23R0_DOWNLOAD_SCRIPT_OTA    2301
+#define CODE_H23R0_DOWNLOAD_SCRIPT_UART   2302
+#define CODE_H23R0_RUN_AUTORUN_SCRIPT     2303
+#define CODE_H23R0_VSP_COMMAND_MODE       2304
+#define CODE_H23R0_VSP_BRIDGE_MODE        2305
+#define CODE_H23R0_SPP_MODE               2306
+#define CODE_H23R0_LED_STATUS_ON          2307
+#define CODE_H23R0_LED_STATUS_OFF         2308
+#define CODE_H23R0_BTC_DEL_ALL_DATA_SEG   2309
+#define CODE_H23R0_EVBTC_SPPCONN          2310
+#define CODE_H23R0_EVBTC_SPPDISCON        2311
+#define CODE_H23R0_EVBTC_PAIR_REQUEST     2312
+#define CODE_H23R0_EVBTC_PIN_REQUEST      2313
+#define CODE_H23R0_EVBTC_PAIR_RESULT      2314
+#define CODE_H23R0_EVBTC_AUTHREQ          2315
+#define CODE_H23R0_EVBTC_PASSKEY          2316
+#define CODE_H23R0_SHOW_DEBUG_INFO        2317
+#define CODE_H23R0_SCAN_REQUIRE           2318
+#define CODE_H23R0_SCAN_RESPOND           2319
+#define CODE_H23R0_CONNECT_REQUIRE        2320
+#define CODE_H23R0_CONNECT_RESPOND        2321
+#define CODE_H23R0_FINISHED_TRANS         2322
 #define CODE_H23R0_UNKNOWN_CMD            2399
 
 /* -----------------------------------------------------------------------
@@ -210,7 +216,7 @@ extern TaskHandle_t ControlBluetoothTaskHandle;
 #endif
 
 extern void resetBt900Module(void);
-extern void btUpdateScript(void);
+extern Module_Status btUpdateScript(Module_Status method, uint8_t port);
 extern Module_Status btSetVspMode(int8_t inputVspMode);
 
 extern HAL_StatusTypeDef btSendCommandToBtc(uint8_t *command);

@@ -388,21 +388,21 @@ void PortPortDMA3_Setup(UART_HandleTypeDef* huartSrc, UART_HandleTypeDef* huartD
 {
 	/* UART RX DMA (DMA2 Ch3) */
 	if (huartSrc->Instance == USART1) {
-		__HAL_DMA1_REMAP(HAL_DMA2_CH3_USART1_RX);
+		__HAL_DMA2_REMAP(HAL_DMA2_CH3_USART1_RX);
 	} else if (huartSrc->Instance == USART2) {
-		__HAL_DMA1_REMAP(HAL_DMA2_CH3_USART2_RX);
+		__HAL_DMA2_REMAP(HAL_DMA2_CH3_USART2_RX);
 	} else if (huartSrc->Instance == USART3) {
-		__HAL_DMA1_REMAP(HAL_DMA2_CH3_USART3_RX);
+		__HAL_DMA2_REMAP(HAL_DMA2_CH3_USART3_RX);
 	} else if (huartSrc->Instance == USART4) {
-		__HAL_DMA1_REMAP(HAL_DMA2_CH3_USART4_RX);
+		__HAL_DMA2_REMAP(HAL_DMA2_CH3_USART4_RX);
 	} else if (huartSrc->Instance == USART5) {
-		__HAL_DMA1_REMAP(HAL_DMA2_CH3_USART5_RX);
+		__HAL_DMA2_REMAP(HAL_DMA2_CH3_USART5_RX);
 	} else if (huartSrc->Instance == USART6) {
-		__HAL_DMA1_REMAP(HAL_DMA2_CH3_USART6_RX);
+		__HAL_DMA2_REMAP(HAL_DMA2_CH3_USART6_RX);
 	} else if (huartSrc->Instance == USART7) {
-		__HAL_DMA1_REMAP(HAL_DMA2_CH3_USART7_RX);
+		__HAL_DMA2_REMAP(HAL_DMA2_CH3_USART7_RX);
 	} else if (huartSrc->Instance == USART8) {
-		__HAL_DMA1_REMAP(HAL_DMA2_CH3_USART8_RX);
+		__HAL_DMA2_REMAP(HAL_DMA2_CH3_USART8_RX);
 	}
 	__HAL_LINKDMA(huartSrc,hdmarx,portPortDMA3);
 
