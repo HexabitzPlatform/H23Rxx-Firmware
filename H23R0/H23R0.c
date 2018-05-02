@@ -202,6 +202,7 @@ void ControlBluetoothTask(void * argument)
 {
 	static uint16_t code_field = 0;
   uint8_t tMessage[MAX_MESSAGE_SIZE] = {0};
+  int8_t *tOutput;
 
 
 	/* Infinite loop */
@@ -246,6 +247,11 @@ void ControlBluetoothTask(void * argument)
         break;
 
       case CODE_H23R0_SHOW_DEBUG_INFO:
+      	stateTransmitBtToMcu = 0;
+        /* Obtain the address of the output buffer */
+        tOutput = FreeRTOS_CLIGetOutputBuffer();
+        memcpy((char *)tOutput, (char *)&cMessage[PORT_BTC_CONN-1][5], (size_t)(messageLength[PORT_BTC_CONN-1]-4));
+        writePxMutex(PcPort, (char *)tOutput, messageLength[PORT_BTC_CONN-1]-4, cmd50ms, HAL_MAX_DELAY);
       	break;
 
       case CODE_H23R0_SCAN_RESPOND:
@@ -429,7 +435,7 @@ void btDisableHandshakeUart(void)
 void btcDmaStreamDownloadScript(TimerHandle_t xTimer)
 {
 	uint32_t tid = 0;
-	
+
 	/* close DMA stream */
 	tid = ( uint32_t ) pvTimerGetTimerID( xTimer );
 	if (23 == tid)
@@ -583,7 +589,7 @@ Module_Status btDownloadScript(Module_Status method, uint8_t port)
 		/* setup pin to control BT900 module */
 		/*btVspMode(H23R0_RUN_VspCommandMode);*/
 		btVspMode(H23R0_RUN_VspBridgeToUartMode);
-        
+
 
 		/* setup DMA stream */
 		PortPortDMA1_Setup(GetUart(PORT_BTC_CONN), GetUart(port), 1);
@@ -790,7 +796,7 @@ static portBASE_TYPE setBaudrateCommand( int8_t *pcWriteBuffer, size_t xWriteBuf
 	portBASE_TYPE xParameterStringLength2 = 0;
 	static const int8_t *pcMessageOK = ( int8_t * ) "Set new baudrate: %d for P%d\r\n";
 	static const int8_t *pcMessageWrongParam = ( int8_t * ) "Wrong parameter!\r\n";
-    
+
     uint8_t port;
     uint32_t baudrate;
 
