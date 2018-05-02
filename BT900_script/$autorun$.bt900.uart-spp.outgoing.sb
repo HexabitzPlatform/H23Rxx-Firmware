@@ -75,6 +75,9 @@
 #define BTC_TIMER_CONTROL_BLINK_LED       0
 #define BTC_TIMER_OUT_BLINK_LED           200 // ms
 
+// debug variable
+#define ENABLED_DEBUG_MESSAGE             0
+
 //******************************************************************************
 // Library Import
 //******************************************************************************
@@ -100,9 +103,6 @@ DIM recBlinkLed // recurring blink led
 DIM MacBtcAddr$
 
 DIM SPPHandleConnection
-
-// debug variable
-DIM dbgMsg$
 
 //******************************************************************************
 // Function and Subroutine definitions
@@ -189,7 +189,9 @@ ENDSUB
 // debug function to show message on terminal
 //------------------------------------------------------------------------------
 SUB DebugFunction(msg$)
-  SendMsgToMcu(CODE_H23R0_SHOW_DEBUG_INFO, msg$)
+  IF (1 == ENABLED_DEBUG_MESSAGE) THEN
+    SendMsgToMcu(CODE_H23R0_SHOW_DEBUG_INFO, msg$)
+  ENDIF
 ENDSUB
 
 //------------------------------------------------------------------------------
@@ -561,7 +563,7 @@ FUNCTION HandlerPairReq()
   DIM tempBtcAddr$
 
   rc = BtcGetPAIRRequestBDAddr(tempBtcAddr$)
-  IF ( (0 == rc) && (0 == strcmp(MacBtcAddr$, tempBtcAddr$)) ) THEN
+  IF (0 == rc) THEN
     rc = BtcSendPairResp(1)
   ENDIF
 ENDFUNC 1
@@ -575,7 +577,7 @@ FUNCTION HandlerPINReq()
 
   tempBtcPin$ = BTC_PIN
   rc = BtcGetPinRequestBDAddr(tempBtcAddr$)
-  IF ( (0 == rc) && (0 == strcmp(MacBtcAddr$, tempBtcAddr$)) ) THEN
+  IF (0 == rc) THEN
     rc = BtcSendPinResp(tempBtcPin$)
   ENDIF
 ENDFUNC 1
