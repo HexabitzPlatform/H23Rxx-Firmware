@@ -25,7 +25,7 @@
 #define UART_TX_BUFFER                    (200)    //Depth of the UART Tx buffer
 
 // define naming bluetooth that other device can see name of this module
-#define BTC_FRIENDLY_NAME                 "Hexabitz-H02Rx"
+#define BTC_FRIENDLY_NAME                 "Hexabitz-H23Rx"
 #define BTC_ADDR                          "\00\1A\7D\DA\71\13"
 #define BTC_PIN                           "0000"
 
