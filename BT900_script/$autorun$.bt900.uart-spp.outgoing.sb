@@ -57,9 +57,10 @@
 #define CODE_H23R0_SHOW_DEBUG_INFO        2317
 #define CODE_H23R0_SCAN_REQUIRE           2318
 #define CODE_H23R0_SCAN_RESPOND           2319
-#define CODE_H23R0_CONNECT_REQUIRE        2320
-#define CODE_H23R0_CONNECT_RESPOND        2321
-#define CODE_H23R0_FINISHED_TRANS         2322
+#define CODE_H23R0_SCAN_RESPOND_ERR       2320
+#define CODE_H23R0_CONNECT_REQUIRE        2321
+#define CODE_H23R0_CONNECT_RESPOND        2322
+#define CODE_H23R0_FINISHED_TRANS         2323
 #define CODE_H23R0_UNKNOWN_CMD            2399
 
 
@@ -124,6 +125,7 @@ SUB CleanBtcData()
   statusLed = 0
   recBlinkLed = 1
   MacBtcAddr$ = BTC_ADDR
+  StrRsp$ = ""
 ENDSUB
 
 //------------------------------------------------------------------------------
@@ -290,7 +292,7 @@ FUNCTION SplitBosMsgFrame(byRef InputStr$, byRef Code, byRef Parameter$) AS INTE
   DIM tCodeL AS INTEGER
   DIM tCode$
 
-  // remove first 3 bytes - length/destination/source field
+  // remove first 3 bytes - length/destination/source fields
   StrShiftLeft(InputStr$, 3)
 
   // get 2 bytes of code field
@@ -298,6 +300,11 @@ FUNCTION SplitBosMsgFrame(byRef InputStr$, byRef Code, byRef Parameter$) AS INTE
   StrShiftLeft(InputStr$, 2)
   tCodeH = StrGetChr(tCode$, 0)
   tCodeL = StrGetChr(tCode$, 1)
+
+  // CODE 15th bit for a long message
+  // CODE 14th bit for Message response
+  // CODE 13th bit for CLI response
+  // CODE 12th bit for Message trace
   Code = ((tCodeH & 0x0F) * 256) + ((tCodeL & 0xF0) * 16) + (tCodeL & 0x0F)
 
   // get n bytes of parameter field
@@ -621,6 +628,9 @@ FUNCTION HandlerUartRx() AS INTEGER
   IF nMatch!=0 THEN
     // CRC exists in the input buffer
     UartCmd$ = StrSplitLeft$(StrRsp$,nMatch)
+    // Set to flush the Rx buffer
+    UartFlush(0x01)
+    StrRsp$ = ""
     EXITFUNC OnUartCmd()
   ENDIF
 ENDFUNC 1
@@ -647,7 +657,7 @@ FUNCTION CallMsgApp(msgID, cmd)
       SendListBtcDevices(IndexInqScan - 1)
     ELSE
       _str$ = "No devices\r\n"
-      SendMsgToMcu(CODE_H23R0_SCAN_RESPOND, _str$)
+      SendMsgToMcu(CODE_H23R0_SCAN_RESPOND_ERR, _str$)
     ENDIF
     // Notify message to close transmission section
     _str$ = "\t" + _msgId$ + "\t" + _cmd$

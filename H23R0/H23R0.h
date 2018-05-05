@@ -194,9 +194,10 @@ extern TaskHandle_t ControlBluetoothTaskHandle;
 #define CODE_H23R0_SHOW_DEBUG_INFO        2317
 #define CODE_H23R0_SCAN_REQUIRE           2318
 #define CODE_H23R0_SCAN_RESPOND           2319
-#define CODE_H23R0_CONNECT_REQUIRE        2320
-#define CODE_H23R0_CONNECT_RESPOND        2321
-#define CODE_H23R0_FINISHED_TRANS         2322
+#define CODE_H23R0_SCAN_RESPOND_ERR       2320
+#define CODE_H23R0_CONNECT_REQUIRE        2321
+#define CODE_H23R0_CONNECT_RESPOND        2322
+#define CODE_H23R0_FINISHED_TRANS         2323
 #define CODE_H23R0_UNKNOWN_CMD            2399
 
 /* -----------------------------------------------------------------------

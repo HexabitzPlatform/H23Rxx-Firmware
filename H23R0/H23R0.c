@@ -248,13 +248,17 @@ void ControlBluetoothTask(void * argument)
 
       case CODE_H23R0_SHOW_DEBUG_INFO:
       	stateTransmitBtToMcu = 0;
-        /* Obtain the address of the output buffer */
-        tOutput = FreeRTOS_CLIGetOutputBuffer();
-        memcpy((char *)tOutput, (char *)&cMessage[PORT_BTC_CONN-1][5], (size_t)(messageLength[PORT_BTC_CONN-1]-4));
-        writePxMutex(PcPort, (char *)tOutput, messageLength[PORT_BTC_CONN-1]-4, cmd50ms, HAL_MAX_DELAY);
+      	btSendMsgToTerminal(&cMessage[PORT_BTC_CONN-1][5], messageLength[PORT_BTC_CONN-1]-4);
       	break;
 
       case CODE_H23R0_SCAN_RESPOND:
+        stateScanDevices = 1;
+      	stateTransmitBtToMcu = 0;
+      	btSendMsgToTerminal(&cMessage[PORT_BTC_CONN-1][5], messageLength[PORT_BTC_CONN-1]-4);
+        break;
+
+      case CODE_H23R0_SCAN_RESPOND_ERR:
+        stateScanDevices = 0;
       	stateTransmitBtToMcu = 0;
       	btSendMsgToTerminal(&cMessage[PORT_BTC_CONN-1][5], messageLength[PORT_BTC_CONN-1]-4);
         break;
@@ -351,10 +355,10 @@ Module_Status Module_MessagingTask(uint16_t code, uint8_t port, uint8_t src, uin
       break;
 
 		case CODE_H23R0_SCAN_REQUIRE:
+      stateScanDevices = 0;
 			/* Send a control message to BT900 to run inquiry new bluetooth devices */
 			SendMessageFromPort(PORT_BTC_CONN, 0, 0, CODE_H23R0_SCAN_REQUIRE, 0);
       dstModule = src;
-			stateScanDevices = 1;
       break;
 
 		case CODE_H23R0_CONNECT_REQUIRE:
@@ -876,6 +880,7 @@ static portBASE_TYPE btScanCommand( int8_t *pcWriteBuffer, size_t xWriteBufferLe
 	configASSERT( pcWriteBuffer );
 
 	/* Scan */
+  stateScanDevices = 0;
 	sprintf( (char *)pcWriteBuffer, "List scanning bluetooth devices:\r\nIndex\tRSSI\tName devices\r\n\r\n");
   writePxMutex(PcPort, (char *)pcWriteBuffer, strlen((char *)pcWriteBuffer), cmd50ms, HAL_MAX_DELAY);
   /* clean terminal output */
@@ -889,7 +894,6 @@ static portBASE_TYPE btScanCommand( int8_t *pcWriteBuffer, size_t xWriteBufferLe
   /* clean terminal output */
   memset((char *)pcWriteBuffer, 0, configCOMMAND_INT_MAX_OUTPUT_SIZE);
 	sprintf( ( char * ) pcWriteBuffer, "\r\n");
-	stateScanDevices = 1;
 
 	/* There is no more data to return after this single string, so return pdFALSE. */
 	return pdFALSE;
