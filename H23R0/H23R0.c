@@ -37,26 +37,25 @@ UART_HandleTypeDef huart4;
 UART_HandleTypeDef huart5;
 UART_HandleTypeDef huart6;
 
+/* Private variables ---------------------------------------------------------*/
+
 /* Show state of transmission from BT900 module to MCU
  * 0 - Nothing
  * 1 - Have just received a new message from BT900
  * 2 - Finished transmission
  */
-uint8_t stateTransmitBtToMcu = 0;
+static uint8_t stateTransmitBtToMcu = 0;
 
 /* state of call scan instruction
  * 0 - did not yet call "scan"
  * 1 - "scan" have been called
  */
-uint8_t stateScanDevices = 0;
-
-uint16_t lenStrTerminal = 0;
-uint8_t dstModule = 0;
+static uint8_t stateScanDevices = 0;
+static uint8_t dstModule = 0;
+static uint8_t listBtcDevices[MAX_SCAN_NUMBER_DEVICES][MAX_SSID_SIZE];
+static uint8_t indexBtcDevice = 0;
 
 EventGroupHandle_t handleUartTerminal = NULL;
-
-/* Private variables ---------------------------------------------------------*/
-
 TaskHandle_t ControlBluetoothTaskHandle = NULL;
 
 /* Private function prototypes -----------------------------------------------*/
@@ -65,7 +64,7 @@ void btEnableHandshakeUart(void);
 void btDisableHandshakeUart(void);
 void btSendMsgToTerminal(uint8_t *pStr, uint8_t lenStr);
 void btWaitEventFinishTransmission(void);
-void btSendMsgToModule(uint8_t dst, uint16_t lenStr);
+void btSendMsgToModule(uint8_t dst, uint8_t *pStr, uint8_t lenStr);
 HAL_StatusTypeDef btSendCommandToBtc(uint8_t *command);
 void btResetBt900Module(void);
 Module_Status btDownloadScript(Module_Status method, uint8_t port);
@@ -152,6 +151,51 @@ const CLI_Command_Definition_t btConnectCommandDefinition =
    -----------------------------------------------------------------------
 */
 
+/* --- clear "listBtcDevices" buffer
+*/
+void cleanListBtcDevices(void)
+{
+  uint8_t i;
+
+  /* clear */
+  for (i = 0; i < MAX_SCAN_NUMBER_DEVICES; i++)
+  {
+    memset(listBtcDevices[i], 0, MAX_SSID_SIZE);
+  }
+  indexBtcDevice = 0;
+}
+
+/* --- Copy SSID name to "listBtcDevices" buffer
+*/
+void copyDataToListBtcDevice(uint8_t *pStr, uint8_t lenStr)
+{
+	memcpy(listBtcDevices[indexBtcDevice], (char *)pStr, (size_t)(lenStr));
+  indexBtcDevice++;
+}
+
+/* --- Print/Send list of bluetooth devices available
+*/
+void sendListBtcDevices(uint8_t type, uint8_t dst)
+{
+  uint8_t i;
+
+  for(i = 0; i < indexBtcDevice; i++)
+  {
+    if (H23R0_SEND_TO_TERMINAL_APP == type)
+    {
+      btSendMsgToTerminal(listBtcDevices[i], strlen((char *)listBtcDevices[i]));
+    }
+    else if (H23R0_SEND_TO_OTHER_DEVICES == type)
+    {
+      btSendMsgToModule(dst, listBtcDevices[i], strlen((char *)listBtcDevices[i]));
+    }
+    else
+    {
+      /* nothing to do here */
+    }
+  }
+}
+
 /* --- H23R0 module initialization.
 */
 void Module_Init(void)
@@ -178,12 +222,13 @@ void Module_Init(void)
 	BT_HOST_WKUP_GPIO_Init();
 	BT_CTS_RTS_GPIO_Init();
 #endif
+  /* clear global data for list */
+  cleanListBtcDevices();
   /* setting baudrate */
   UpdateBaudrate(PORT_BTC_CONN, 115200); /* Normal baudrate for BT900 */
   /* clean global variable */
   stateTransmitBtToMcu = 0;
   stateScanDevices = 0;
-  lenStrTerminal = 0;
   dstModule = 0;
   /* create a event group for UART port */
   handleUartTerminal = xEventGroupCreate();
@@ -246,9 +291,18 @@ void ControlBluetoothTask(void * argument)
         break;
 
       case CODE_H23R0_SHOW_DEBUG_INFO:
+      	stateTransmitBtToMcu = 0;
+      	btSendMsgToTerminal(&cMessage[PORT_BTC_CONN-1][5], messageLength[PORT_BTC_CONN-1]-4);
       	break;
 
       case CODE_H23R0_SCAN_RESPOND:
+        stateScanDevices = 1;
+      	stateTransmitBtToMcu = 0;
+      	copyDataToListBtcDevice(&cMessage[PORT_BTC_CONN-1][5], messageLength[PORT_BTC_CONN-1]-4);
+        break;
+
+      case CODE_H23R0_SCAN_RESPOND_ERR:
+        stateScanDevices = 0;
       	stateTransmitBtToMcu = 0;
       	btSendMsgToTerminal(&cMessage[PORT_BTC_CONN-1][5], messageLength[PORT_BTC_CONN-1]-4);
         break;
@@ -263,20 +317,29 @@ void ControlBluetoothTask(void * argument)
       	{
 					sprintf((char *)&tMessage[0], "Connected failure ...\r\n");
       	}
-      	btSendMsgToTerminal(tMessage, strlen((char *)tMessage));
-        break;
-
-      case CODE_H23R0_FINISHED_TRANS:
-        if (PC != PcPort)
+        if (CLI == portStatus[PcPort])
         {
+          btSendMsgToTerminal(tMessage, strlen((char *)tMessage));
           stateTransmitBtToMcu = H23R0_BTC_CLOSE_CONNECTION;
           xEventGroupSetBits(handleUartTerminal, EVENT_CLOSE_CONNECTION_BIT);
         }
         else
         {
-          btSendMsgToModule(dstModule, lenStrTerminal);
+          btSendMsgToModule(dstModule, &cMessage[PORT_BTC_CONN-1][5], 1);
         }
-        lenStrTerminal = 0;
+        break;
+
+      case CODE_H23R0_FINISHED_SCAN:
+        if (CLI == portStatus[PcPort])
+        {
+          sendListBtcDevices(H23R0_SEND_TO_TERMINAL_APP, 0);
+          stateTransmitBtToMcu = H23R0_BTC_CLOSE_CONNECTION;
+          xEventGroupSetBits(handleUartTerminal, EVENT_CLOSE_CONNECTION_BIT);
+        }
+        else
+        {
+          sendListBtcDevices(H23R0_SEND_TO_OTHER_DEVICES, dstModule);
+        }
         break;
 
       default:
@@ -345,10 +408,11 @@ Module_Status Module_MessagingTask(uint16_t code, uint8_t port, uint8_t src, uin
       break;
 
 		case CODE_H23R0_SCAN_REQUIRE:
+      stateScanDevices = 0;
+      cleanListBtcDevices();
 			/* Send a control message to BT900 to run inquiry new bluetooth devices */
 			SendMessageFromPort(PORT_BTC_CONN, 0, 0, CODE_H23R0_SCAN_REQUIRE, 0);
       dstModule = src;
-			stateScanDevices = 1;
       break;
 
 		case CODE_H23R0_CONNECT_REQUIRE:
@@ -429,7 +493,7 @@ void btDisableHandshakeUart(void)
 void btcDmaStreamDownloadScript(TimerHandle_t xTimer)
 {
 	uint32_t tid = 0;
-	
+
 	/* close DMA stream */
 	tid = ( uint32_t ) pvTimerGetTimerID( xTimer );
 	if (23 == tid)
@@ -441,20 +505,6 @@ void btcDmaStreamDownloadScript(TimerHandle_t xTimer)
 	/* create event to close update script command */
 	stateTransmitBtToMcu = H23R0_BTC_CLOSE_CONNECTION;
 	xEventGroupSetBits(handleUartTerminal, EVENT_CLOSE_CONNECTION_BIT);
-}
-
-/*-----------------------------------------------------------*/
-
-/* --- Setting connection to send a message into Terminal app
-*/
-void btSendMsgToTerminal(uint8_t *pStr, uint8_t lenStr)
-{
-  int8_t *tOutput;
-
-	/* Obtain the address of the output buffer */
-	tOutput = FreeRTOS_CLIGetOutputBuffer();
-	memcpy(&tOutput[0]+lenStrTerminal, (char *)pStr, (size_t)(lenStr));
-	lenStrTerminal = lenStrTerminal + lenStr;
 }
 
 /*-----------------------------------------------------------*/
@@ -476,34 +526,30 @@ void btWaitEventFinishTransmission(void)
 
 /*-----------------------------------------------------------*/
 
-/* --- Send message that have been received from BT900 to other MCU
+/* --- Setting connection to send a message into Terminal app
 */
-void btSendMsgToModule(uint8_t dst, uint16_t lenStr)
+void btSendMsgToTerminal(uint8_t *pStr, uint8_t lenStr)
 {
-  int8_t *tOutputCli;
-  uint16_t tCodeField = CODE_CLI_response;
-  uint16_t tLenStr = 0;
+  int8_t *tOutput;
 
 	/* Obtain the address of the output buffer */
-	tOutputCli = FreeRTOS_CLIGetOutputBuffer();
-  do {
-    if (lenStr > (tLenStr + MAX_MESSAGE_SIZE - 5))
-    {
-      memcpy(messageParams, tOutputCli+tLenStr, (size_t)(MAX_MESSAGE_SIZE - 5));
-      tLenStr = tLenStr + MAX_MESSAGE_SIZE - 5;
-      tCodeField = CODE_CLI_response | (1 << 15); /* long message */
-			/* Send response */
-			SendMessageToModule(dst, tCodeField, (size_t)(MAX_MESSAGE_SIZE - 5));
-    }
-    else
-    {
-      memcpy(messageParams, tOutputCli+tLenStr, (size_t)(lenStr - tLenStr));
-      tLenStr = lenStr;
-      tCodeField = CODE_CLI_response; /* long message */
-			/* Send response */
-			SendMessageToModule(dst, tCodeField, (size_t)(lenStr - tLenStr));
-    }
-  } while (tLenStr < lenStr);
+	tOutput = FreeRTOS_CLIGetOutputBuffer();
+	memcpy(tOutput, (char *)pStr, (size_t)(lenStr));
+  /* print all datas in output buffer of Terminal */
+  writePxMutex(PcPort, (char *)tOutput, strlen((char *)tOutput), cmd50ms, HAL_MAX_DELAY);
+  /* clean terminal output */
+  memset((char *)tOutput, 0, configCOMMAND_INT_MAX_OUTPUT_SIZE);
+}
+
+/*-----------------------------------------------------------*/
+
+/* --- Send message that have been received from BT900 to other MCU
+*/
+void btSendMsgToModule(uint8_t dst, uint8_t *pStr, uint8_t lenStr)
+{
+  memcpy(messageParams, (char *)pStr, (size_t)lenStr);
+  /* Send response */
+  SendMessageToModule(dst, CODE_CLI_response, (size_t)lenStr);
 }
 
 /*-----------------------------------------------------------*/
@@ -514,7 +560,7 @@ HAL_StatusTypeDef btSendCommandToBtc(uint8_t *command)
 {
 	HAL_StatusTypeDef result;
 
-	result = writePxMutex(PORT_BTC_CONN, (char *) command, strlen((char *) command), cmd50ms, HAL_MAX_DELAY);
+	result = writePxMutex(PORT_BTC_CONN, (char *) command, strlen((char *)command), cmd50ms, HAL_MAX_DELAY);
 	return result;
 }
 
@@ -583,7 +629,7 @@ Module_Status btDownloadScript(Module_Status method, uint8_t port)
 		/* setup pin to control BT900 module */
 		/*btVspMode(H23R0_RUN_VspCommandMode);*/
 		btVspMode(H23R0_RUN_VspBridgeToUartMode);
-        
+
 
 		/* setup DMA stream */
 		PortPortDMA1_Setup(GetUart(PORT_BTC_CONN), GetUart(port), 1);
@@ -790,7 +836,7 @@ static portBASE_TYPE setBaudrateCommand( int8_t *pcWriteBuffer, size_t xWriteBuf
 	portBASE_TYPE xParameterStringLength2 = 0;
 	static const int8_t *pcMessageOK = ( int8_t * ) "Set new baudrate: %d for P%d\r\n";
 	static const int8_t *pcMessageWrongParam = ( int8_t * ) "Wrong parameter!\r\n";
-    
+
     uint8_t port;
     uint32_t baudrate;
 
@@ -870,6 +916,8 @@ static portBASE_TYPE btScanCommand( int8_t *pcWriteBuffer, size_t xWriteBufferLe
 	configASSERT( pcWriteBuffer );
 
 	/* Scan */
+  stateScanDevices = 0;
+  cleanListBtcDevices();
 	sprintf( (char *)pcWriteBuffer, "List scanning bluetooth devices:\r\nIndex\tRSSI\tName devices\r\n\r\n");
   writePxMutex(PcPort, (char *)pcWriteBuffer, strlen((char *)pcWriteBuffer), cmd50ms, HAL_MAX_DELAY);
   /* clean terminal output */
@@ -878,12 +926,9 @@ static portBASE_TYPE btScanCommand( int8_t *pcWriteBuffer, size_t xWriteBufferLe
 	SendMessageFromPort(PORT_BTC_CONN, 0, 0, CODE_H23R0_SCAN_REQUIRE, 0);
   /* waiting event finish transmission */
 	btWaitEventFinishTransmission();
-	/* print all datas in output buffer of Terminal */
-	writePxMutex(PcPort, (char *)pcWriteBuffer, strlen((char *)pcWriteBuffer), cmd50ms, HAL_MAX_DELAY);
   /* clean terminal output */
   memset((char *)pcWriteBuffer, 0, configCOMMAND_INT_MAX_OUTPUT_SIZE);
 	sprintf( ( char * ) pcWriteBuffer, "\r\n");
-	stateScanDevices = 1;
 
 	/* There is no more data to return after this single string, so return pdFALSE. */
 	return pdFALSE;
@@ -919,8 +964,6 @@ static portBASE_TYPE btConnectCommand( int8_t *pcWriteBuffer, size_t xWriteBuffe
 			SendMessageFromPort(PORT_BTC_CONN, 0, 0, CODE_H23R0_CONNECT_REQUIRE, lenPar - 2);
 			/* waiting event finish transmission */
 			btWaitEventFinishTransmission();
-			/* print all datas in output buffer of Terminal */
-			writePxMutex(PcPort, (char *)pcWriteBuffer, strlen((char *)pcWriteBuffer), cmd50ms, HAL_MAX_DELAY);
       /* clean terminal output */
       memset((char *)pcWriteBuffer, 0, configCOMMAND_INT_MAX_OUTPUT_SIZE);
 			sprintf((char *)pcWriteBuffer, "\r\n");

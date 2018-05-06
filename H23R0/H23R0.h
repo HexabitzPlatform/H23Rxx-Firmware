@@ -149,6 +149,12 @@ typedef enum
 /* Macros define maximum number of data to transfer (0 up to 65535)*/
 #define H23R0_MAX_NUMBER_OF_DATA_DMA    40000
 
+/* define list of bluetooth available */
+#define MAX_SSID_SIZE                     20
+#define MAX_SCAN_NUMBER_DEVICES           10
+
+#define H23R0_SEND_TO_TERMINAL_APP        0x00
+#define H23R0_SEND_TO_OTHER_DEVICES       0x01
 
 /* Export UART variables */
 extern UART_HandleTypeDef huart1;
@@ -194,9 +200,10 @@ extern TaskHandle_t ControlBluetoothTaskHandle;
 #define CODE_H23R0_SHOW_DEBUG_INFO        2317
 #define CODE_H23R0_SCAN_REQUIRE           2318
 #define CODE_H23R0_SCAN_RESPOND           2319
-#define CODE_H23R0_CONNECT_REQUIRE        2320
-#define CODE_H23R0_CONNECT_RESPOND        2321
-#define CODE_H23R0_FINISHED_TRANS         2322
+#define CODE_H23R0_SCAN_RESPOND_ERR       2320
+#define CODE_H23R0_CONNECT_REQUIRE        2321
+#define CODE_H23R0_CONNECT_RESPOND        2322
+#define CODE_H23R0_FINISHED_SCAN          2323
 #define CODE_H23R0_UNKNOWN_CMD            2399
 
 /* -----------------------------------------------------------------------

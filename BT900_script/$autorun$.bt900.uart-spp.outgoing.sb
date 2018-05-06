@@ -25,7 +25,7 @@
 #define UART_TX_BUFFER                    (200)    //Depth of the UART Tx buffer
 
 // define naming bluetooth that other device can see name of this module
-#define BTC_FRIENDLY_NAME                 "Hexabitz-H02Rx"
+#define BTC_FRIENDLY_NAME                 "Hexabitz-H23Rx"
 #define BTC_ADDR                          "\00\1A\7D\DA\71\13"
 #define BTC_PIN                           "0000"
 
@@ -35,6 +35,7 @@
 //Max length message that can send to MCU
 #define MAX_MESSAGE_SIZE                  50
 #define MAX_SSID_SIZE                     20
+#define MAX_SCAN_NUMBER_DEVICES           10
 
 // define code send command to MCU
 #define CODE_H23R0_GET_INFO               2300
@@ -57,13 +58,13 @@
 #define CODE_H23R0_SHOW_DEBUG_INFO        2317
 #define CODE_H23R0_SCAN_REQUIRE           2318
 #define CODE_H23R0_SCAN_RESPOND           2319
-#define CODE_H23R0_CONNECT_REQUIRE        2320
-#define CODE_H23R0_CONNECT_RESPOND        2321
-#define CODE_H23R0_FINISHED_TRANS         2322
+#define CODE_H23R0_SCAN_RESPOND_ERR       2320
+#define CODE_H23R0_CONNECT_REQUIRE        2321
+#define CODE_H23R0_CONNECT_RESPOND        2322
+#define CODE_H23R0_FINISHED_SCAN          2323
 #define CODE_H23R0_UNKNOWN_CMD            2399
 
 
-#define BTC_SCAN_NUMBER_DEVICES           10
 
 // define code to trigger EVMSGAPP event
 #define BTC_APP_SCAN_BLUETOOTH_DEVICES    100
@@ -74,6 +75,9 @@
 #define BTC_TIMEOUT_INQUIRY               5 // msecond
 #define BTC_TIMER_CONTROL_BLINK_LED       0
 #define BTC_TIMER_OUT_BLINK_LED           200 // ms
+
+// debug variable
+#define ENABLED_DEBUG_MESSAGE             0
 
 //******************************************************************************
 // Library Import
@@ -86,9 +90,9 @@
 DIM rc
 DIM IndexInqScan
 DIM IndexGetName
-DIM NameDevices$[BTC_SCAN_NUMBER_DEVICES]
-DIM Addr$[BTC_SCAN_NUMBER_DEVICES]
-DIM Rssi[BTC_SCAN_NUMBER_DEVICES]
+DIM NameDevices$[MAX_SCAN_NUMBER_DEVICES]
+DIM Addr$[MAX_SCAN_NUMBER_DEVICES]
+DIM Rssi[MAX_SCAN_NUMBER_DEVICES]
 
 DIM UartCmd$                  // CMD line from uart
 DIM StrRsp$ AS STRING         // Uart rx data is stored here
@@ -100,9 +104,6 @@ DIM recBlinkLed // recurring blink led
 DIM MacBtcAddr$
 
 DIM SPPHandleConnection
-
-// debug variable
-DIM dbgMsg$
 
 //******************************************************************************
 // Function and Subroutine definitions
@@ -124,6 +125,7 @@ SUB CleanBtcData()
   statusLed = 0
   recBlinkLed = 1
   MacBtcAddr$ = BTC_ADDR
+  StrRsp$ = ""
 ENDSUB
 
 //------------------------------------------------------------------------------
@@ -189,7 +191,9 @@ ENDSUB
 // debug function to show message on terminal
 //------------------------------------------------------------------------------
 SUB DebugFunction(msg$)
-  SendMsgToMcu(CODE_H23R0_SHOW_DEBUG_INFO, msg$)
+  IF (1 == ENABLED_DEBUG_MESSAGE) THEN
+    SendMsgToMcu(CODE_H23R0_SHOW_DEBUG_INFO, msg$)
+  ENDIF
 ENDSUB
 
 //------------------------------------------------------------------------------
@@ -288,7 +292,7 @@ FUNCTION SplitBosMsgFrame(byRef InputStr$, byRef Code, byRef Parameter$) AS INTE
   DIM tCodeL AS INTEGER
   DIM tCode$
 
-  // remove first 3 bytes - length/destination/source field
+  // remove first 3 bytes - length/destination/source fields
   StrShiftLeft(InputStr$, 3)
 
   // get 2 bytes of code field
@@ -296,7 +300,12 @@ FUNCTION SplitBosMsgFrame(byRef InputStr$, byRef Code, byRef Parameter$) AS INTE
   StrShiftLeft(InputStr$, 2)
   tCodeH = StrGetChr(tCode$, 0)
   tCodeL = StrGetChr(tCode$, 1)
-  Code = ((tCodeH & 0x0F) * 256) + ((tCodeL & 0xF0) * 16) + (tCodeL & 0x0F)
+
+  // CODE 15th bit for a long message
+  // CODE 14th bit for Message response
+  // CODE 13th bit for CLI response
+  // CODE 12th bit for Message trace
+  Code = ((tCodeH & 0x0F) * 256) + (((tCodeL >> 4) & 0x0F) * 16) + (tCodeL & 0x0F)
 
   // get n bytes of parameter field
   lenPar = StrLen(InputStr$) - 1 // Don't count CRC field
@@ -413,9 +422,9 @@ FUNCTION OnUartCmd()
   DIM tLenPar AS INTEGER
   DIM tCode AS INTEGER
   DIM tPar$ AS STRING
-  DIM _tCode$
 
   tLenPar = SplitBosMsgFrame(UartCmd$, tCode, tPar$)
+
   SELECT tCode
     CASE CODE_H23R0_SCAN_REQUIRE
       rc = StartInqBtcDevices()
@@ -465,12 +474,12 @@ SUB OnStartup()
   rc = BtcSetPairable(1)  // Pairable
 
   // Pairing information is stored in the bonding manager
-  rc = BtcSavePairings(1)
+  rc = BtcSavePairings(0)
 
   // Set inquiry
   rc = BtcInquiryConfig(0, 0)   // Inquiry Type: General Inquiry
   rc = BtcInquiryConfig(1, 1)   // Inquiry Mode: RSSI
-  rc = BtcInquiryConfig(2, BTC_SCAN_NUMBER_DEVICES) // Max number of inquiry responses to receive
+  rc = BtcInquiryConfig(2, MAX_SCAN_NUMBER_DEVICES) // Max number of inquiry responses to receive
 
   // Set friendly name
   strTempNameBt$ = BTC_FRIENDLY_NAME
@@ -504,7 +513,7 @@ FUNCTION HandlerInqResp(respType)
   // Get information of remote bluetooth devices
   //BtcInquiryGetReportFull()
   rc = BtcInquiryGetReport(tAddr$, inqData$, nDiscarded, tRssi)
-  IF ( (1 == respType) && (IndexInqScan < BTC_SCAN_NUMBER_DEVICES) ) THEN
+  IF ( (1 == respType) && (IndexInqScan < MAX_SCAN_NUMBER_DEVICES) ) THEN
     Addr$[IndexInqScan] = tAddr$
     Rssi[IndexInqScan] = tRssi
     IndexInqScan = IndexInqScan + 1
@@ -561,7 +570,7 @@ FUNCTION HandlerPairReq()
   DIM tempBtcAddr$
 
   rc = BtcGetPAIRRequestBDAddr(tempBtcAddr$)
-  IF ( (0 == rc) && (0 == strcmp(MacBtcAddr$, tempBtcAddr$)) ) THEN
+  IF (0 == rc) THEN
     rc = BtcSendPairResp(1)
   ENDIF
 ENDFUNC 1
@@ -575,7 +584,7 @@ FUNCTION HandlerPINReq()
 
   tempBtcPin$ = BTC_PIN
   rc = BtcGetPinRequestBDAddr(tempBtcAddr$)
-  IF ( (0 == rc) && (0 == strcmp(MacBtcAddr$, tempBtcAddr$)) ) THEN
+  IF (0 == rc) THEN
     rc = BtcSendPinResp(tempBtcPin$)
   ENDIF
 ENDFUNC 1
@@ -597,8 +606,6 @@ FUNCTION HandlerPairRes(nRes)
   SPRINT #_nRes$, nRes
   strTemp$ = strTemp$ + "\t" + _nRes$
   SendMsgToMcu(CODE_H23R0_CONNECT_RESPOND, strTemp$)
-  // send notification to app
-  rc = SendMsgApp(BTC_APP_SPP_CONNECTED, 0)
 ENDFUNC 1
 
 //------------------------------------------------------------------------------
@@ -621,6 +628,9 @@ FUNCTION HandlerUartRx() AS INTEGER
   IF nMatch!=0 THEN
     // CRC exists in the input buffer
     UartCmd$ = StrSplitLeft$(StrRsp$,nMatch)
+    // Set to flush the Rx buffer
+    UartFlush(0x01)
+    StrRsp$ = ""
     EXITFUNC OnUartCmd()
   ENDIF
 ENDFUNC 1
@@ -647,15 +657,11 @@ FUNCTION CallMsgApp(msgID, cmd)
       SendListBtcDevices(IndexInqScan - 1)
     ELSE
       _str$ = "No devices\r\n"
-      SendMsgToMcu(CODE_H23R0_SCAN_RESPOND, _str$)
+      SendMsgToMcu(CODE_H23R0_SCAN_RESPOND_ERR, _str$)
     ENDIF
     // Notify message to close transmission section
     _str$ = "\t" + _msgId$ + "\t" + _cmd$
-    SendMsgToMcu(CODE_H23R0_FINISHED_TRANS, _str$)
-  ELSEIF (BTC_APP_SPP_CONNECTED == msgID) THEN
-    // Notify message to close transmission section
-    _str$ = "\t" + _msgId$ + "\t" + _cmd$
-    SendMsgToMcu(CODE_H23R0_FINISHED_TRANS, _str$)
+    SendMsgToMcu(CODE_H23R0_FINISHED_SCAN, _str$)
   ELSEIF (BTC_APP_INVALID_PARAMETER == msgID) THEN
     _str$ = "Invalid input parameter:\t" + _cmd$
     SendMsgToMcu(CODE_H23R0_UNKNOWN_CMD, _str$)
