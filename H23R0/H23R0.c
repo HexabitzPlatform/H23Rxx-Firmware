@@ -317,7 +317,7 @@ void ControlBluetoothTask(void * argument)
       	{
 					sprintf((char *)&tMessage[0], "Connected failure ...\r\n");
       	}
-        if (CLI != portStatus[PcPort])
+        if (CLI == portStatus[PcPort])
         {
           btSendMsgToTerminal(tMessage, strlen((char *)tMessage));
           stateTransmitBtToMcu = H23R0_BTC_CLOSE_CONNECTION;

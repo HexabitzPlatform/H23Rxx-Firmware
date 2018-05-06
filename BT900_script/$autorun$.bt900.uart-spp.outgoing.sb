@@ -305,7 +305,7 @@ FUNCTION SplitBosMsgFrame(byRef InputStr$, byRef Code, byRef Parameter$) AS INTE
   // CODE 14th bit for Message response
   // CODE 13th bit for CLI response
   // CODE 12th bit for Message trace
-  Code = ((tCodeH & 0x0F) * 256) + ((tCodeL & 0xF0) * 16) + (tCodeL & 0x0F)
+  Code = ((tCodeH & 0x0F) * 256) + (((tCodeL >> 4) & 0x0F) * 16) + (tCodeL & 0x0F)
 
   // get n bytes of parameter field
   lenPar = StrLen(InputStr$) - 1 // Don't count CRC field
