@@ -474,7 +474,7 @@ SUB OnStartup()
   rc = BtcSetPairable(1)  // Pairable
 
   // Pairing information is stored in the bonding manager
-  rc = BtcSavePairings(1)
+  rc = BtcSavePairings(0)
 
   // Set inquiry
   rc = BtcInquiryConfig(0, 0)   // Inquiry Type: General Inquiry
