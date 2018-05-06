@@ -35,6 +35,7 @@
 //Max length message that can send to MCU
 #define MAX_MESSAGE_SIZE                  50
 #define MAX_SSID_SIZE                     20
+#define MAX_SCAN_NUMBER_DEVICES           10
 
 // define code send command to MCU
 #define CODE_H23R0_GET_INFO               2300
@@ -60,11 +61,10 @@
 #define CODE_H23R0_SCAN_RESPOND_ERR       2320
 #define CODE_H23R0_CONNECT_REQUIRE        2321
 #define CODE_H23R0_CONNECT_RESPOND        2322
-#define CODE_H23R0_FINISHED_TRANS         2323
+#define CODE_H23R0_FINISHED_SCAN          2323
 #define CODE_H23R0_UNKNOWN_CMD            2399
 
 
-#define BTC_SCAN_NUMBER_DEVICES           10
 
 // define code to trigger EVMSGAPP event
 #define BTC_APP_SCAN_BLUETOOTH_DEVICES    100
@@ -90,9 +90,9 @@
 DIM rc
 DIM IndexInqScan
 DIM IndexGetName
-DIM NameDevices$[BTC_SCAN_NUMBER_DEVICES]
-DIM Addr$[BTC_SCAN_NUMBER_DEVICES]
-DIM Rssi[BTC_SCAN_NUMBER_DEVICES]
+DIM NameDevices$[MAX_SCAN_NUMBER_DEVICES]
+DIM Addr$[MAX_SCAN_NUMBER_DEVICES]
+DIM Rssi[MAX_SCAN_NUMBER_DEVICES]
 
 DIM UartCmd$                  // CMD line from uart
 DIM StrRsp$ AS STRING         // Uart rx data is stored here
@@ -479,7 +479,7 @@ SUB OnStartup()
   // Set inquiry
   rc = BtcInquiryConfig(0, 0)   // Inquiry Type: General Inquiry
   rc = BtcInquiryConfig(1, 1)   // Inquiry Mode: RSSI
-  rc = BtcInquiryConfig(2, BTC_SCAN_NUMBER_DEVICES) // Max number of inquiry responses to receive
+  rc = BtcInquiryConfig(2, MAX_SCAN_NUMBER_DEVICES) // Max number of inquiry responses to receive
 
   // Set friendly name
   strTempNameBt$ = BTC_FRIENDLY_NAME
@@ -513,7 +513,7 @@ FUNCTION HandlerInqResp(respType)
   // Get information of remote bluetooth devices
   //BtcInquiryGetReportFull()
   rc = BtcInquiryGetReport(tAddr$, inqData$, nDiscarded, tRssi)
-  IF ( (1 == respType) && (IndexInqScan < BTC_SCAN_NUMBER_DEVICES) ) THEN
+  IF ( (1 == respType) && (IndexInqScan < MAX_SCAN_NUMBER_DEVICES) ) THEN
     Addr$[IndexInqScan] = tAddr$
     Rssi[IndexInqScan] = tRssi
     IndexInqScan = IndexInqScan + 1
@@ -661,7 +661,7 @@ FUNCTION CallMsgApp(msgID, cmd)
     ENDIF
     // Notify message to close transmission section
     _str$ = "\t" + _msgId$ + "\t" + _cmd$
-    SendMsgToMcu(CODE_H23R0_FINISHED_TRANS, _str$)
+    SendMsgToMcu(CODE_H23R0_FINISHED_SCAN, _str$)
   ELSEIF (BTC_APP_INVALID_PARAMETER == msgID) THEN
     _str$ = "Invalid input parameter:\t" + _cmd$
     SendMsgToMcu(CODE_H23R0_UNKNOWN_CMD, _str$)
