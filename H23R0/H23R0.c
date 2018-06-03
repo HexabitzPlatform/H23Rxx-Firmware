@@ -39,14 +39,14 @@ UART_HandleTypeDef huart6;
 
 /* Private variables ---------------------------------------------------------*/
 
-/* Show state of transmission from BT900 module to MCU
+/* Transmission state from BT900 module to MCU
  * 0 - Nothing
  * 1 - Have just received a new message from BT900
  * 2 - Finished transmission
  */
 static uint8_t stateTransmitBtToMcu = 0;
 
-/* state of call scan instruction
+/* "scan" command state
  * 0 - did not yet call "scan"
  * 1 - "scan" have been called
  */
@@ -85,7 +85,7 @@ static portBASE_TYPE btConnectCommand( int8_t *pcWriteBuffer, size_t xWriteBuffe
 const CLI_Command_Definition_t btGetInfoCommandDefinition =
 {
 	( const int8_t * ) "bt-info", /* The command string to type. */
-	( const int8_t * ) "bt-info:\r\n Command to get information of BT900 module\r\n\r\n",
+	( const int8_t * ) "(H23R1) bt-info:\r\n Get BT900 module information\r\n\r\n",
 	btGetInfoCommand, /* The function to run. */
 	0 /* No parameters are expected. */
 };
@@ -94,7 +94,7 @@ const CLI_Command_Definition_t btGetInfoCommandDefinition =
 const CLI_Command_Definition_t btDownloadScriptCommandDefinition =
 {
 	( const int8_t * ) "bt-download-script", /* The command string to type. */
-	( const int8_t * ) "bt-download-script:\r\n Command to download new $autorun$ script (1st parameter): ota or uart\r\n\r\n",
+	( const int8_t * ) "(H23R1) bt-download-script:\r\n Download new $autorun$ script to BT900 module (1st parameter): ota or uart\r\n\r\n",
 	btDownloadScriptCommand, /* The function to run. */
 	1 /* No parameters are expected. */
 };
@@ -103,7 +103,7 @@ const CLI_Command_Definition_t btDownloadScriptCommandDefinition =
 const CLI_Command_Definition_t btRunScriptCommandDefinition =
 {
 	( const int8_t * ) "bt-run-script", /* The command string to type. */
-	( const int8_t * ) "bt-run-script:\r\n Command to restart BT900 with $autorun$ script\r\n\r\n",
+	( const int8_t * ) "(H23R1) bt-run-script:\r\n Restart BT900 with $autorun$ script\r\n\r\n",
 	btRunScriptCommand, /* The function to run. */
 	0 /* No parameters are expected. */
 };
@@ -112,7 +112,7 @@ const CLI_Command_Definition_t btRunScriptCommandDefinition =
 const CLI_Command_Definition_t btVspModeCommandDefinition =
 {
 	( const int8_t * ) "bt-vsp-mode", /* The command string to type. */
-	( const int8_t * ) "bt-vsp-mode:\r\n Set VSP mode for bluetooth module (BT900) (1st parameter): command or bridge\r\n\r\n",
+	( const int8_t * ) "(H23R1) bt-vsp-mode:\r\n Set VSP mode for BT900 module (1st parameter): command or bridge\r\n\r\n",
 	btVspModeCommand, /* The function to run. */
 	1 /* No parameters are expected. */
 };
@@ -121,7 +121,7 @@ const CLI_Command_Definition_t btVspModeCommandDefinition =
 const CLI_Command_Definition_t setBaudrateCommandDefinition =
 {
 	( const int8_t * ) "set-baudrate", /* The command string to type. */
-	( const int8_t * ) "set-baudrate:\r\n Set baudrate for UART \r\n\t(1st parameter): P1 to P6\r\n\t(2nd parameter): 115200 or 921600\r\n\r\n",
+	( const int8_t * ) "(H23R1) set-baudrate:\r\n Set baudrate for UART \r\n\t(1st parameter): P1 to P6\r\n\t(2nd parameter): 115200 or 921600\r\n\r\n",
 	setBaudrateCommand, /* The function to run. */
 	2 /* One parameter is expected. */
 };
@@ -130,7 +130,7 @@ const CLI_Command_Definition_t setBaudrateCommandDefinition =
 const CLI_Command_Definition_t btScanCommandDefinition =
 {
 	( const int8_t * ) "scan", /* The command string to type. */
-	( const int8_t * ) "scan:\r\n Scan nearby ble devices and display them in a list along with their SSIDs and RSSI levels\r\n\r\n",
+	( const int8_t * ) "(H23R1) scan:\r\n Scan nearby BLE devices and display them in a list along with their SSIDs and RSSI levels\r\n\r\n",
 	btScanCommand, /* The function to run. */
 	0 /* One parameter is expected. */
 };
@@ -139,7 +139,7 @@ const CLI_Command_Definition_t btScanCommandDefinition =
 const CLI_Command_Definition_t btConnectCommandDefinition =
 {
 	( const int8_t * ) "connect", /* The command string to type. */
-	( const int8_t * ) "connect:\r\n Set connection with other bluetooth device \r\n\r\n",
+	( const int8_t * ) "(H23R1) connect:\r\n Connect to another bluetooth device \r\n\r\n",
 	btConnectCommand, /* The function to run. */
 	1 /* One parameter is expected. */
 };
@@ -234,7 +234,7 @@ void Module_Init(void)
   handleUartTerminal = xEventGroupCreate();
 	/* Create the Bluetooth module task */
 	xTaskCreate(ControlBluetoothTask, (const char *) "ControlBluetooth", (2*configMINIMAL_STACK_SIZE), NULL, osPriorityNormal, &ControlBluetoothTaskHandle);
-	/* In default, the BT900 will run in the "Self-contained Run mode" */
+	/* By default, the BT900 will run in the "Self-contained Run mode" */
 	btRunScript();
 	/* btVspMode(H23R0_RUN_VspBridgeToUartMode); */
 }
@@ -254,7 +254,7 @@ void ControlBluetoothTask(void * argument)
 	{
 		/* Wait forever until a message is received from the Bluetooth module */
 		ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
-    /* code field of message */
+    /* code field of message - convert text to binary */
     code_field = cMessage[PORT_BTC_CONN-1][4] - 0x30;
     code_field += (cMessage[PORT_BTC_CONN-1][3] - 0x30) * 10;
     code_field += (cMessage[PORT_BTC_CONN-1][2] - 0x30) * 100;
@@ -311,11 +311,11 @@ void ControlBluetoothTask(void * argument)
       	stateTransmitBtToMcu = 0;
       	if ('0' == cMessage[PORT_BTC_CONN-1][5])
       	{
-					sprintf((char *)&tMessage[0], "Connected success ...\r\n");
+					sprintf((char *)&tMessage[0], "Connection succeeded ...\r\n");
       	}
       	else
       	{
-					sprintf((char *)&tMessage[0], "Connected failure ...\r\n");
+					sprintf((char *)&tMessage[0], "Connection failed ...\r\n");
       	}
         if (CLI == portStatus[PcPort])
         {
@@ -407,15 +407,15 @@ Module_Status Module_MessagingTask(uint16_t code, uint8_t port, uint8_t src, uin
 			IND_OFF();
       break;
 
-		case CODE_H23R0_SCAN_REQUIRE:
+		case CODE_H23R0_SCAN_INQUIRE:
       stateScanDevices = 0;
       cleanListBtcDevices();
-			/* Send a control message to BT900 to run inquiry new bluetooth devices */
-			SendMessageFromPort(PORT_BTC_CONN, 0, 0, CODE_H23R0_SCAN_REQUIRE, 0);
+			/* Send a control message to BT900 to inquire about new bluetooth devices */
+			SendMessageFromPort(PORT_BTC_CONN, 0, 0, CODE_H23R0_SCAN_INQUIRE, 0);
       dstModule = src;
       break;
 
-		case CODE_H23R0_CONNECT_REQUIRE:
+		case CODE_H23R0_CONNECT_INQUIRE:
       if (1 == stateScanDevices)
       {
         /* dst - 1 byte | src - 1 byte | code - 2 bytes | crc - 1 byte */
@@ -424,7 +424,7 @@ Module_Status Module_MessagingTask(uint16_t code, uint8_t port, uint8_t src, uin
         {
           /* Send a control message to BT900 to run inquiry new bluetooth devices */
           memcpy((char *)&messageParams[0], (char *)&cMessage[port-1][5], lenPar - 2);
-          SendMessageFromPort(PORT_BTC_CONN, 0, 0, CODE_H23R0_CONNECT_REQUIRE, lenPar - 2);
+          SendMessageFromPort(PORT_BTC_CONN, 0, 0, CODE_H23R0_CONNECT_INQUIRE, lenPar - 2);
         }
         else
         {
@@ -509,13 +509,13 @@ void btcDmaStreamDownloadScript(TimerHandle_t xTimer)
 
 /*-----------------------------------------------------------*/
 
-/* --- Wait event finish transmission that is sent from bluetooth module
+/* --- Wait for transmission to finish
 */
 void btWaitEventFinishTransmission(void)
 {
 	EventBits_t tEvBits;
 	do {
-		tEvBits = xEventGroupWaitBits(handleUartTerminal, EVENT_CLOSE_CONNECTION_BIT, pdTRUE, pdFALSE, cmd50ms);
+		tEvBits = xEventGroupWaitBits(handleUartTerminal, EVENT_CLOSE_CONNECTION_BIT, pdTRUE, pdFALSE, 10000);
 		if ((tEvBits & EVENT_CLOSE_CONNECTION_BIT) != EVENT_CLOSE_CONNECTION_BIT)
 		{
 			continue;
@@ -526,16 +526,16 @@ void btWaitEventFinishTransmission(void)
 
 /*-----------------------------------------------------------*/
 
-/* --- Setting connection to send a message into Terminal app
+/* --- Send a message to thet erminal
 */
 void btSendMsgToTerminal(uint8_t *pStr, uint8_t lenStr)
 {
   int8_t *tOutput;
 
-	/* Obtain the address of the output buffer */
+	/* Obtain output buffer address */
 	tOutput = FreeRTOS_CLIGetOutputBuffer();
 	memcpy(tOutput, (char *)pStr, (size_t)(lenStr));
-  /* print all datas in output buffer of Terminal */
+  /* print all data in Terminal output buffer */
   writePxMutex(PcPort, (char *)tOutput, strlen((char *)tOutput), cmd50ms, HAL_MAX_DELAY);
   /* clean terminal output */
   memset((char *)tOutput, 0, configCOMMAND_INT_MAX_OUTPUT_SIZE);
@@ -543,7 +543,7 @@ void btSendMsgToTerminal(uint8_t *pStr, uint8_t lenStr)
 
 /*-----------------------------------------------------------*/
 
-/* --- Send message that have been received from BT900 to other MCU
+/* --- Send message that have been received from BT900 to the MCU
 */
 void btSendMsgToModule(uint8_t dst, uint8_t *pStr, uint8_t lenStr)
 {
@@ -554,7 +554,7 @@ void btSendMsgToModule(uint8_t dst, uint8_t *pStr, uint8_t lenStr)
 
 /*-----------------------------------------------------------*/
 
-/* --- Send command from MCU to Bluetooth module its setting/control
+/* --- Send command from MCU to the Bluetooth module
 */
 HAL_StatusTypeDef btSendCommandToBtc(uint8_t *command)
 {
@@ -706,7 +706,7 @@ static portBASE_TYPE btGetInfoCommand( int8_t *pcWriteBuffer, size_t xWriteBuffe
 
 	/* Get information from the BT900 */
 
-	sprintf( ( char * ) pcWriteBuffer, "Get information from BT900 module\r\n");
+	sprintf( ( char * ) pcWriteBuffer, "Get BT900 module information \r\n");
 
 
 	/* There is no more data to return after this single string, so return pdFALSE. */
@@ -741,7 +741,7 @@ static portBASE_TYPE btDownloadScriptCommand( int8_t *pcWriteBuffer, size_t xWri
 		writePxMutex(PcPort, (char *)pcWriteBuffer, strlen((char *)pcWriteBuffer), cmd50ms, HAL_MAX_DELAY);
 		result = btDownloadScript(H23R0_RUN_DownloadScriptViaUart, PcPort);
 		/* message to show on terminal app */
-		sprintf( ( char * ) pcWriteBuffer, "Ready download smartBASIC file\r\n");
+		sprintf( ( char * ) pcWriteBuffer, "Finished downloading smartBASIC file\r\n");
 		writePxMutex(PcPort, (char *)pcWriteBuffer, strlen((char *)pcWriteBuffer), cmd50ms, HAL_MAX_DELAY);
 		/* waiting event finish transmission */
 		btWaitEventFinishTransmission();
@@ -753,7 +753,7 @@ static portBASE_TYPE btDownloadScriptCommand( int8_t *pcWriteBuffer, size_t xWri
 
 	if (H23R0_ERR_WrongParams == result)
 	{
-		sprintf( ( char * ) pcWriteBuffer, "Wrong value of input parameter\r\n");
+		sprintf( ( char * ) pcWriteBuffer, "Wrong input parameter\r\n");
 		writePxMutex(PcPort, (char *)pcWriteBuffer, strlen((char *)pcWriteBuffer), cmd50ms, HAL_MAX_DELAY);
 	}
 
@@ -918,12 +918,12 @@ static portBASE_TYPE btScanCommand( int8_t *pcWriteBuffer, size_t xWriteBufferLe
 	/* Scan */
   stateScanDevices = 0;
   cleanListBtcDevices();
-	sprintf( (char *)pcWriteBuffer, "List scanning bluetooth devices:\r\nIndex\tRSSI\tName devices\r\n\r\n");
+	sprintf( (char *)pcWriteBuffer, "Nearby bluetooth devices:\r\nIndex\tRSSI\tName devices\r\n\r\n");
   writePxMutex(PcPort, (char *)pcWriteBuffer, strlen((char *)pcWriteBuffer), cmd50ms, HAL_MAX_DELAY);
   /* clean terminal output */
   memset((char *)pcWriteBuffer, 0, configCOMMAND_INT_MAX_OUTPUT_SIZE);
 	/* Send a control message to BT900 to run inquiry new bluetooth devices */
-	SendMessageFromPort(PORT_BTC_CONN, 0, 0, CODE_H23R0_SCAN_REQUIRE, 0);
+	SendMessageFromPort(PORT_BTC_CONN, 0, 0, CODE_H23R0_SCAN_INQUIRE, 0);
   /* waiting event finish transmission */
 	btWaitEventFinishTransmission();
   /* clean terminal output */
@@ -951,7 +951,7 @@ static portBASE_TYPE btConnectCommand( int8_t *pcWriteBuffer, size_t xWriteBuffe
 	{
 		/* Obtain the 1st parameter string define VSP mode on BT900 */
 		pcParameterString1 = ( int8_t * ) FreeRTOS_CLIGetParameter (pcCommandString, 1, &xParameterStringLength1);
-		sprintf((char *)pcWriteBuffer, "Connecting bluetooth device %s:\r\n", pcParameterString1);
+		sprintf((char *)pcWriteBuffer, "Connecting to bluetooth device %s:\r\n", pcParameterString1);
 		writePxMutex(PcPort, (char *)pcWriteBuffer, strlen((char *)pcWriteBuffer), cmd50ms, HAL_MAX_DELAY);
 	  /* clean terminal output */
 	  memset((char *)pcWriteBuffer, 0, configCOMMAND_INT_MAX_OUTPUT_SIZE);
@@ -961,7 +961,7 @@ static portBASE_TYPE btConnectCommand( int8_t *pcWriteBuffer, size_t xWriteBuffe
 		{
 			/* Send a control message to BT900 to run inquiry new bluetooth devices */
 			memcpy(&messageParams[0], &pcParameterString1[1], lenPar - 2);
-			SendMessageFromPort(PORT_BTC_CONN, 0, 0, CODE_H23R0_CONNECT_REQUIRE, lenPar - 2);
+			SendMessageFromPort(PORT_BTC_CONN, 0, 0, CODE_H23R0_CONNECT_INQUIRE, lenPar - 2);
 			/* waiting event finish transmission */
 			btWaitEventFinishTransmission();
       /* clean terminal output */
@@ -970,7 +970,7 @@ static portBASE_TYPE btConnectCommand( int8_t *pcWriteBuffer, size_t xWriteBuffe
 		}
 		else
 		{
-			sprintf((char *)pcWriteBuffer, "Wrong value of input parameter\r\n");
+			sprintf((char *)pcWriteBuffer, "Wrong input parameter\r\n");
 		}
 	}
 	else
