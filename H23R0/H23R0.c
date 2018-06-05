@@ -851,10 +851,11 @@ static portBASE_TYPE btDeleteProgramCommand( int8_t *pcWriteBuffer, size_t xWrit
 	configASSERT( pcWriteBuffer );
 
 	sprintf( ( char * ) pcWriteBuffer, "Delete older smartBASIC program in BT900\r\n");
-	writePxMutex(PcPort, (char *)pcWriteBuffer, strlen((char *)pcWriteBuffer), cmd50ms, HAL_MAX_DELAY);
 
-	/* make sure it into VSP mode */
-	result = btVspMode(H23R0_RUN_VspCommandMode);
+	/* Set VSP mode */
+	result = btVspMode(H23R0_RUN_VspBridgeToUartMode);
+	/* waiting BT900 reset */
+	Delay_ms(100);
 
 	/* Respond to the command */
 	if (H23R0_ERR_WrongParams == result)
