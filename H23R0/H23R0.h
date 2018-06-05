@@ -226,7 +226,7 @@ extern void resetBt900Module(void);
 extern Module_Status btUpdateScript(Module_Status method, uint8_t port);
 extern Module_Status btSetVspMode(int8_t inputVspMode);
 
-extern HAL_StatusTypeDef btSendCommandToBtc(uint8_t *command);
+extern HAL_StatusTypeDef btSendCommandToBtc(const uint8_t *command);
 
 
 /* -----------------------------------------------------------------------

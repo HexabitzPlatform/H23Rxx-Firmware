@@ -65,7 +65,7 @@ void btDisableHandshakeUart(void);
 void btSendMsgToTerminal(uint8_t *pStr, uint8_t lenStr);
 void btWaitEventFinishTransmission(void);
 void btSendMsgToModule(uint8_t dst, uint8_t *pStr, uint8_t lenStr);
-HAL_StatusTypeDef btSendCommandToBtc(uint8_t *command);
+HAL_StatusTypeDef btSendCommandToBtc(const uint8_t *command);
 void btResetBt900Module(void);
 Module_Status btDownloadScript(Module_Status method, uint8_t port);
 void btRunScript(void);
@@ -78,6 +78,7 @@ static portBASE_TYPE btGetInfoCommand( int8_t *pcWriteBuffer, size_t xWriteBuffe
 static portBASE_TYPE btDownloadScriptCommand( int8_t *pcWriteBuffer, size_t xWriteBufferLen, const int8_t *pcCommandString );
 static portBASE_TYPE btRunScriptCommand( int8_t *pcWriteBuffer, size_t xWriteBufferLen, const int8_t *pcCommandString );
 static portBASE_TYPE btVspModeCommand( int8_t *pcWriteBuffer, size_t xWriteBufferLen, const int8_t *pcCommandString );
+static portBASE_TYPE btDeleteProgramCommand( int8_t *pcWriteBuffer, size_t xWriteBufferLen, const int8_t *pcCommandString );
 static portBASE_TYPE btScanCommand( int8_t *pcWriteBuffer, size_t xWriteBufferLen, const int8_t *pcCommandString );
 static portBASE_TYPE btConnectCommand( int8_t *pcWriteBuffer, size_t xWriteBufferLen, const int8_t *pcCommandString );
 
@@ -115,6 +116,15 @@ const CLI_Command_Definition_t btVspModeCommandDefinition =
 	( const int8_t * ) "(H23R1) bt-vsp-mode:\r\n Set VSP mode for BT900 module (1st parameter): command or bridge\r\n\r\n",
 	btVspModeCommand, /* The function to run. */
 	1 /* No parameters are expected. */
+};
+
+/* CLI command structure : bt-delete-program */
+const CLI_Command_Definition_t btDeleteProgramCommandDefinition =
+{
+	( const int8_t * ) "bt-delete-program", /* The command string to type. */
+	( const int8_t * ) "(H23R1) bt-delete-program:\r\n Delete smartBASIC program on BT900 module before it wtites new program into the module\r\n\r\n",
+	btDeleteProgramCommand, /* The function to run. */
+	0 /* No parameters are expected. */
 };
 
 /* CLI command structure : set-baudrate */
@@ -461,6 +471,7 @@ void RegisterModuleCLICommands(void)
 	FreeRTOS_CLIRegisterCommand( &btDownloadScriptCommandDefinition);
 	FreeRTOS_CLIRegisterCommand( &btRunScriptCommandDefinition);
 	FreeRTOS_CLIRegisterCommand( &btVspModeCommandDefinition);
+	FreeRTOS_CLIRegisterCommand( &btDeleteProgramCommandDefinition);
 	FreeRTOS_CLIRegisterCommand( &btScanCommandDefinition);
 	FreeRTOS_CLIRegisterCommand( &btConnectCommandDefinition);
 }
@@ -556,7 +567,7 @@ void btSendMsgToModule(uint8_t dst, uint8_t *pStr, uint8_t lenStr)
 
 /* --- Send command from MCU to the Bluetooth module
 */
-HAL_StatusTypeDef btSendCommandToBtc(uint8_t *command)
+HAL_StatusTypeDef btSendCommandToBtc(const uint8_t *command)
 {
 	HAL_StatusTypeDef result;
 
@@ -741,7 +752,7 @@ static portBASE_TYPE btDownloadScriptCommand( int8_t *pcWriteBuffer, size_t xWri
 		writePxMutex(PcPort, (char *)pcWriteBuffer, strlen((char *)pcWriteBuffer), cmd50ms, HAL_MAX_DELAY);
 		result = btDownloadScript(H23R0_RUN_DownloadScriptViaUart, PcPort);
 		/* message to show on terminal app */
-		sprintf( ( char * ) pcWriteBuffer, "Finished downloading smartBASIC file\r\n");
+		sprintf( ( char * ) pcWriteBuffer, "Ready downloading smartBASIC file\r\n");
 		writePxMutex(PcPort, (char *)pcWriteBuffer, strlen((char *)pcWriteBuffer), cmd50ms, HAL_MAX_DELAY);
 		/* waiting event finish transmission */
 		btWaitEventFinishTransmission();
@@ -820,6 +831,39 @@ static portBASE_TYPE btVspModeCommand( int8_t *pcWriteBuffer, size_t xWriteBuffe
 	if (H23R0_ERR_WrongParams == result)
 	{
 		strcpy( ( char * ) pcWriteBuffer, ( char * ) pcMessageWrongParam );
+	}
+
+	/* There is no more data to return after this single string, so return pdFALSE. */
+	return pdFALSE;
+}
+
+static portBASE_TYPE btDeleteProgramCommand( int8_t *pcWriteBuffer, size_t xWriteBufferLen, const int8_t *pcCommandString )
+{
+	Module_Status result = H23R0_OK;
+
+	static const uint8_t *pcMsgDelFirmware = ( uint8_t * ) "at&f *\r\n";
+	static const int8_t *pcMessageWrongParam = ( int8_t * ) "Failure delete smartBASIC program in BT900 module\r\n";
+
+	/* Remove compile time warnings about unused parameters, and check the
+	write buffer is not NULL.  NOTE - for simplicity, this example assumes the
+	write buffer length is adequate, so does not check for buffer overflows. */
+	( void ) xWriteBufferLen;
+	configASSERT( pcWriteBuffer );
+
+	sprintf( ( char * ) pcWriteBuffer, "Delete older smartBASIC program in BT900\r\n");
+	writePxMutex(PcPort, (char *)pcWriteBuffer, strlen((char *)pcWriteBuffer), cmd50ms, HAL_MAX_DELAY);
+
+	/* make sure it into VSP mode */
+	result = btVspMode(H23R0_RUN_VspCommandMode);
+
+	/* Respond to the command */
+	if (H23R0_ERR_WrongParams == result)
+	{
+		strcpy( ( char * ) pcWriteBuffer, ( char * ) pcMessageWrongParam );
+	}
+	else
+	{
+		btSendCommandToBtc(pcMsgDelFirmware);
 	}
 
 	/* There is no more data to return after this single string, so return pdFALSE. */
