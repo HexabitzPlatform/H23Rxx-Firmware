@@ -1,6 +1,6 @@
 /**
   ******************************************************************************
-  * File Name          : H23R0_gpio.h
+  * File Name          : H23Rx_gpio.h
   * Description        : This file contains all the functions prototypes for
   *                      the gpio
   ******************************************************************************
@@ -38,8 +38,8 @@
 */
 
 /* Define to prevent recursive inclusion -------------------------------------*/
-#ifndef __H23R0_gpio_H
-#define __H23R0_gpio_H
+#ifndef __H23Rx_gpio_H
+#define __H23Rx_gpio_H
 #ifdef __cplusplus
  extern "C" {
 #endif
@@ -63,7 +63,7 @@ extern void BT_CTS_RTS_GPIO_Init(void);
 #ifdef __cplusplus
 }
 #endif
-#endif /*__H23R0_gpio_H */
+#endif /*__H23Rx_gpio_H */
 
 
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

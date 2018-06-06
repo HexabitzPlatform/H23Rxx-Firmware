@@ -1,6 +1,6 @@
 /**
   ******************************************************************************
-  * File Name          : H23R0_uart.c
+  * File Name          : H23Rx_uart.c
   * Description        : This file provides code for the configuration
   *                      of the USART instances.
   ******************************************************************************

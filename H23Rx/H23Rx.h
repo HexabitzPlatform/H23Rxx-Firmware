@@ -2,20 +2,20 @@
     BitzOS (BOS) V0.0.0 - Copyright (C) 2016 Hexabitz
     All rights reserved
 
-    File Name     : H23R0.h
-    Description   : Header file for module H23R0.
+    File Name     : H23Rx.h
+    Description   : Header file for module H23R0/H23R1.
 										Bluetooth module (BT800/BT900)
 */
 
 /* Define to prevent recursive inclusion -------------------------------------*/
-#ifndef H23R0_H
-#define H23R0_H
+#ifndef H23Rx_H
+#define H23Rx_H
 
 /* Includes ------------------------------------------------------------------*/
 #include "BOS.h"
-#include "H23R0_uart.h"
-#include "H23R0_gpio.h"
-#include "H23R0_dma.h"
+#include "H23Rx_uart.h"
+#include "H23Rx_gpio.h"
+#include "H23Rx_dma.h"
 
 /* Exported definitions -------------------------------------------------------*/
 
@@ -120,14 +120,14 @@
 /* H23R0_Status Type Definition */
 typedef enum
 {
-  H23R0_OK = 0,
-	H23R0_ERR_UnknownMessage = 1,
-	H23R0_ERR_WrongParams,
-	H23R0_RUN_VspCommandMode,
-	H23R0_RUN_VspBridgeToUartMode,
-	H23R0_RUN_DownloadScriptViaOta,
-	H23R0_RUN_DownloadScriptViaUart,
-	H23R0_ERROR = 255
+  H23Rx_OK = 0,
+	H23Rx_ERR_UnknownMessage = 1,
+	H23Rx_ERR_WrongParams,
+	H23Rx_RUN_VspCommandMode,
+	H23Rx_RUN_VspBridgeToUartMode,
+	H23Rx_RUN_DownloadScriptViaOta,
+	H23Rx_RUN_DownloadScriptViaUart,
+	H23Rx_ERROR = 255
 } Module_Status;
 
 /* Indicator LED */
@@ -140,25 +140,25 @@ typedef enum
 /* Macros define to enable/disable debug information will be shown
  * on Terminal Application for Bluetooth
  */
-#define H23R0_ENABLE_DEBUG_BTC          1
-#define H23R0_DISABLE_DEBUG_BTC         0
+#define H23Rx_ENABLE_DEBUG_BTC          1
+#define H23Rx_DISABLE_DEBUG_BTC         0
 
-#define H23R0_UART_DEBUG_PORT           P2
-#define H23R0_SHOW_DEBUG_INFO_TERMINAL  0
+#define H23Rx_UART_DEBUG_PORT           P2
+#define H23Rx_SHOW_DEBUG_INFO_TERMINAL  0
 
 /* Macros define bit event group to trigger terminal uart port */
 #define EVENT_CLOSE_CONNECTION_BIT      ( 1 << 0 ) /* close connection event */
 #define H23R0_BTC_CLOSE_CONNECTION      0xFF
 
 /* Macros define maximum number of data to transfer (0 up to 65535)*/
-#define H23R0_MAX_NUMBER_OF_DATA_DMA    40000
+#define H23Rx_MAX_NUMBER_OF_DATA_DMA    40000
 
 /* define list of bluetooth available */
 #define MAX_SSID_SIZE                     20
 #define MAX_SCAN_NUMBER_DEVICES           10
 
-#define H23R0_SEND_TO_TERMINAL_APP        0x00
-#define H23R0_SEND_TO_OTHER_DEVICES       0x01
+#define H23Rx_SEND_TO_TERMINAL_APP        0x00
+#define H23Rx_SEND_TO_OTHER_DEVICES       0x01
 
 /* Export UART variables */
 extern UART_HandleTypeDef huart1;
@@ -184,31 +184,31 @@ extern TaskHandle_t ControlBluetoothTaskHandle;
    -----------------------------------------------------------------------
 */
 
-#define CODE_H23R0_GET_INFO               2300
-#define CODE_H23R0_DOWNLOAD_SCRIPT_OTA    2301
-#define CODE_H23R0_DOWNLOAD_SCRIPT_UART   2302
-#define CODE_H23R0_RUN_AUTORUN_SCRIPT     2303
-#define CODE_H23R0_VSP_COMMAND_MODE       2304
-#define CODE_H23R0_VSP_BRIDGE_MODE        2305
-#define CODE_H23R0_SPP_MODE               2306
-#define CODE_H23R0_LED_STATUS_ON          2307
-#define CODE_H23R0_LED_STATUS_OFF         2308
-#define CODE_H23R0_BTC_DEL_ALL_DATA_SEG   2309
-#define CODE_H23R0_EVBTC_SPPCONN          2310
-#define CODE_H23R0_EVBTC_SPPDISCON        2311
-#define CODE_H23R0_EVBTC_PAIR_REQUEST     2312
-#define CODE_H23R0_EVBTC_PIN_REQUEST      2313
-#define CODE_H23R0_EVBTC_PAIR_RESULT      2314
-#define CODE_H23R0_EVBTC_AUTHREQ          2315
-#define CODE_H23R0_EVBTC_PASSKEY          2316
-#define CODE_H23R0_SHOW_DEBUG_INFO        2317
-#define CODE_H23R0_SCAN_INQUIRE           2318
-#define CODE_H23R0_SCAN_RESPOND           2319
-#define CODE_H23R0_SCAN_RESPOND_ERR       2320
-#define CODE_H23R0_CONNECT_INQUIRE        2321
-#define CODE_H23R0_CONNECT_RESPOND        2322
-#define CODE_H23R0_FINISHED_SCAN          2323
-#define CODE_H23R0_UNKNOWN_CMD            2399
+#define CODE_H23Rx_GET_INFO               2300
+#define CODE_H23Rx_DOWNLOAD_SCRIPT_OTA    2301
+#define CODE_H23Rx_DOWNLOAD_SCRIPT_UART   2302
+#define CODE_H23Rx_RUN_AUTORUN_SCRIPT     2303
+#define CODE_H23Rx_VSP_COMMAND_MODE       2304
+#define CODE_H23Rx_VSP_BRIDGE_MODE        2305
+#define CODE_H23Rx_SPP_MODE               2306
+#define CODE_H23Rx_LED_STATUS_ON          2307
+#define CODE_H23Rx_LED_STATUS_OFF         2308
+#define CODE_H23Rx_BTC_DEL_ALL_DATA_SEG   2309
+#define CODE_H23Rx_EVBTC_SPPCONN          2310
+#define CODE_H23Rx_EVBTC_SPPDISCON        2311
+#define CODE_H23Rx_EVBTC_PAIR_REQUEST     2312
+#define CODE_H23Rx_EVBTC_PIN_REQUEST      2313
+#define CODE_H23Rx_EVBTC_PAIR_RESULT      2314
+#define CODE_H23Rx_EVBTC_AUTHREQ          2315
+#define CODE_H23Rx_EVBTC_PASSKEY          2316
+#define CODE_H23Rx_SHOW_DEBUG_INFO        2317
+#define CODE_H23Rx_SCAN_INQUIRE           2318
+#define CODE_H23Rx_SCAN_RESPOND           2319
+#define CODE_H23Rx_SCAN_RESPOND_ERR       2320
+#define CODE_H23Rx_CONNECT_INQUIRE        2321
+#define CODE_H23Rx_CONNECT_RESPOND        2322
+#define CODE_H23Rx_FINISHED_SCAN          2323
+#define CODE_H23Rx_UNKNOWN_CMD            2399
 
 /* -----------------------------------------------------------------------
 	|																APIs	 																 	|
@@ -244,6 +244,6 @@ extern const CLI_Command_Definition_t btVspModeCommandDefinition;
 extern const CLI_Command_Definition_t btSetBaudrateCommandDefinition;
 
 
-#endif /* H23R0_H */
+#endif /* H23Rx_H */
 
 /************************ (C) COPYRIGHT HEXABITZ *****END OF FILE****/

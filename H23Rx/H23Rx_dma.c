@@ -1,6 +1,6 @@
 /**
   ******************************************************************************
-  * File Name          : H23R0_DMA.c
+  * File Name          : H23Rx_DMA.c
   * Description        : This file provides code for the configuration
   *                      of the DMA instances.
   ******************************************************************************
