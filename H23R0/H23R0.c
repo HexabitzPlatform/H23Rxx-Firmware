@@ -78,7 +78,7 @@ static portBASE_TYPE btGetInfoCommand( int8_t *pcWriteBuffer, size_t xWriteBuffe
 static portBASE_TYPE btDownloadScriptCommand( int8_t *pcWriteBuffer, size_t xWriteBufferLen, const int8_t *pcCommandString );
 static portBASE_TYPE btRunScriptCommand( int8_t *pcWriteBuffer, size_t xWriteBufferLen, const int8_t *pcCommandString );
 static portBASE_TYPE btVspModeCommand( int8_t *pcWriteBuffer, size_t xWriteBufferLen, const int8_t *pcCommandString );
-static portBASE_TYPE btDeleteProgramCommand( int8_t *pcWriteBuffer, size_t xWriteBufferLen, const int8_t *pcCommandString );
+static portBASE_TYPE btDeleteScriptCommand( int8_t *pcWriteBuffer, size_t xWriteBufferLen, const int8_t *pcCommandString );
 static portBASE_TYPE btScanCommand( int8_t *pcWriteBuffer, size_t xWriteBufferLen, const int8_t *pcCommandString );
 static portBASE_TYPE btConnectCommand( int8_t *pcWriteBuffer, size_t xWriteBufferLen, const int8_t *pcCommandString );
 
@@ -118,12 +118,12 @@ const CLI_Command_Definition_t btVspModeCommandDefinition =
 	1 /* No parameters are expected. */
 };
 
-/* CLI command structure : bt-delete-program */
-const CLI_Command_Definition_t btDeleteProgramCommandDefinition =
+/* CLI command structure : bt-delete-script */
+const CLI_Command_Definition_t btDeleteScriptCommandDefinition =
 {
 	( const int8_t * ) "bt-delete-program", /* The command string to type. */
 	( const int8_t * ) "(H23R1) bt-delete-program:\r\n Delete smartBASIC program on BT900 module before it wtites new program into the module\r\n\r\n",
-	btDeleteProgramCommand, /* The function to run. */
+	btDeleteScriptCommand, /* The function to run. */
 	0 /* No parameters are expected. */
 };
 
@@ -837,12 +837,12 @@ static portBASE_TYPE btVspModeCommand( int8_t *pcWriteBuffer, size_t xWriteBuffe
 	return pdFALSE;
 }
 
-static portBASE_TYPE btDeleteProgramCommand( int8_t *pcWriteBuffer, size_t xWriteBufferLen, const int8_t *pcCommandString )
+static portBASE_TYPE btDeleteScriptCommand( int8_t *pcWriteBuffer, size_t xWriteBufferLen, const int8_t *pcCommandString )
 {
 	Module_Status result = H23R0_OK;
 
 	static const uint8_t *pcMsgDelFirmware = ( uint8_t * ) "at&f *\r\n";
-	static const int8_t *pcMessageWrongParam = ( int8_t * ) "Failure delete smartBASIC program in BT900 module\r\n";
+	static const int8_t *pcMessageWrongParam = ( int8_t * ) "Failed deleting current smartBASIC script\r\n";
 
 	/* Remove compile time warnings about unused parameters, and check the
 	write buffer is not NULL.  NOTE - for simplicity, this example assumes the
@@ -850,7 +850,7 @@ static portBASE_TYPE btDeleteProgramCommand( int8_t *pcWriteBuffer, size_t xWrit
 	( void ) xWriteBufferLen;
 	configASSERT( pcWriteBuffer );
 
-	sprintf( ( char * ) pcWriteBuffer, "Delete older smartBASIC program in BT900\r\n");
+	sprintf( ( char * ) pcWriteBuffer, "Current smartBASIC script deleted successfuly\r\n");
 
 	/* Set VSP mode */
 	result = btVspMode(H23R0_RUN_VspBridgeToUartMode);

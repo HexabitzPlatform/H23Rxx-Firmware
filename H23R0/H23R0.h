@@ -19,8 +19,12 @@
 
 /* Exported definitions -------------------------------------------------------*/
 
-//#define	modulePN		_H23R0
-#define	modulePN		_H23R1
+#ifdef H23R0
+	#define	modulePN		_H23R0
+#endif
+#ifdef H23R1
+	#define	modulePN		_H23R1
+#endif
 
 /* Port-related definitions */
 #define	NumOfPorts		6
