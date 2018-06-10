@@ -558,9 +558,11 @@ void btSendMsgToTerminal(uint8_t *pStr, uint8_t lenStr)
 */
 void btSendMsgToModule(uint8_t dst, uint8_t *pStr, uint8_t lenStr)
 {
-  memcpy(messageParams, (char *)pStr, (size_t)lenStr);
-  /* Send response */
-  SendMessageToModule(dst, CODE_CLI_response, (size_t)lenStr);
+	if (dst) {
+		memcpy(messageParams, (char *)pStr, (size_t)lenStr);
+		/* Send response */
+		SendMessageToModule(dst, CODE_CLI_response, (size_t)lenStr);
+	}
 }
 
 /*-----------------------------------------------------------*/
@@ -752,7 +754,7 @@ static portBASE_TYPE btDownloadScriptCommand( int8_t *pcWriteBuffer, size_t xWri
 		writePxMutex(PcPort, (char *)pcWriteBuffer, strlen((char *)pcWriteBuffer), cmd50ms, HAL_MAX_DELAY);
 		result = btDownloadScript(H23Rx_RUN_DownloadScriptViaUart, PcPort);
 		/* message to show on terminal app */
-		sprintf( ( char * ) pcWriteBuffer, "Ready to downloading smartBASIC file\r\n");
+		sprintf( ( char * ) pcWriteBuffer, "Ready to download smartBASIC file\r\n");
 		writePxMutex(PcPort, (char *)pcWriteBuffer, strlen((char *)pcWriteBuffer), cmd50ms, HAL_MAX_DELAY);
 		/* waiting event finish transmission */
 		btWaitEventFinishTransmission();
@@ -842,7 +844,7 @@ static portBASE_TYPE btDeleteScriptCommand( int8_t *pcWriteBuffer, size_t xWrite
 	Module_Status result = H23Rx_OK;
 
 	static const uint8_t *pcMsgDelFirmware = ( uint8_t * ) "at&f *\r\n";
-	static const int8_t *pcMessageWrongParam = ( int8_t * ) "Failed deleting current smartBASIC script\r\n";
+	static const int8_t *pcMessageWrongParam = ( int8_t * ) "Failed to delete current smartBASIC script\r\n";
 
 	/* Remove compile time warnings about unused parameters, and check the
 	write buffer is not NULL.  NOTE - for simplicity, this example assumes the
@@ -963,7 +965,7 @@ static portBASE_TYPE btScanCommand( int8_t *pcWriteBuffer, size_t xWriteBufferLe
 	/* Scan */
   stateScanDevices = 0;
   cleanListBtcDevices();
-	sprintf( (char *)pcWriteBuffer, "Nearby bluetooth devices:\r\nIndex\tRSSI\tName\r\n\r\n");
+	sprintf( (char *)pcWriteBuffer, "Scanning nearby bluetooth devices..\r\n\nIndex\tRSSI\tName\r\n\r\n");
   writePxMutex(PcPort, (char *)pcWriteBuffer, strlen((char *)pcWriteBuffer), cmd50ms, HAL_MAX_DELAY);
   /* clean terminal output */
   memset((char *)pcWriteBuffer, 0, configCOMMAND_INT_MAX_OUTPUT_SIZE);
