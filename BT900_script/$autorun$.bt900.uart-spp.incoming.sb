@@ -25,7 +25,7 @@
 #define UART_TX_BUFFER                    (200)    //Depth of the UART Tx buffer
 
 // define naming bluetooth that other device can see name of this module
-#define BTC_FRIENDLY_NAME                 "Hexabitz-H23Rx"
+#define BTC_FRIENDLY_NAME                 "H23Rx-"
 #define BTC_ADDR                          "\00\1A\7D\DA\71\13"
 #define BTC_PIN                           "0000"
 
@@ -38,32 +38,31 @@
 #define MAX_SCAN_NUMBER_DEVICES           10
 
 // define code send command to MCU
-#define CODE_H23R0_GET_INFO               2300
-#define CODE_H23R0_DOWNLOAD_SCRIPT_OTA    2301
-#define CODE_H23R0_DOWNLOAD_SCRIPT_UART   2302
-#define CODE_H23R0_RUN_AUTORUN_SCRIPT     2303
-#define CODE_H23R0_VSP_COMMAND_MODE       2304
-#define CODE_H23R0_VSP_BRIDGE_MODE        2305
-#define CODE_H23R0_SPP_MODE               2306
-#define CODE_H23R0_LED_STATUS_ON          2307
-#define CODE_H23R0_LED_STATUS_OFF         2308
-#define CODE_H23R0_BTC_DEL_ALL_DATA_SEG   2309
-#define CODE_H23R0_EVBTC_SPPCONN          2310
-#define CODE_H23R0_EVBTC_SPPDISCON        2311
-#define CODE_H23R0_EVBTC_PAIR_REQUEST     2312
-#define CODE_H23R0_EVBTC_PIN_REQUEST      2313
-#define CODE_H23R0_EVBTC_PAIR_RESULT      2314
-#define CODE_H23R0_EVBTC_AUTHREQ          2315
-#define CODE_H23R0_EVBTC_PASSKEY          2316
-#define CODE_H23R0_SHOW_DEBUG_INFO        2317
-#define CODE_H23R0_SCAN_REQUIRE           2318
-#define CODE_H23R0_SCAN_RESPOND           2319
-#define CODE_H23R0_SCAN_RESPOND_ERR       2320
-#define CODE_H23R0_CONNECT_REQUIRE        2321
-#define CODE_H23R0_CONNECT_RESPOND        2322
-#define CODE_H23R0_FINISHED_SCAN          2323
-#define CODE_H23R0_UNKNOWN_CMD            2399
-
+#define CODE_H23Rx_GET_INFO               2300
+#define CODE_H23Rx_DOWNLOAD_SCRIPT_OTA    2301
+#define CODE_H23Rx_DOWNLOAD_SCRIPT_UART   2302
+#define CODE_H23Rx_RUN_AUTORUN_SCRIPT     2303
+#define CODE_H23Rx_VSP_COMMAND_MODE       2304
+#define CODE_H23Rx_VSP_BRIDGE_MODE        2305
+#define CODE_H23Rx_SPP_MODE               2306
+#define CODE_H23Rx_LED_STATUS_ON          2307
+#define CODE_H23Rx_LED_STATUS_OFF         2308
+#define CODE_H23Rx_BTC_DEL_ALL_DATA_SEG   2309
+#define CODE_H23Rx_EVBTC_SPPCONN          2310
+#define CODE_H23Rx_EVBTC_SPPDISCON        2311
+#define CODE_H23Rx_EVBTC_PAIR_REQUEST     2312
+#define CODE_H23Rx_EVBTC_PIN_REQUEST      2313
+#define CODE_H23Rx_EVBTC_PAIR_RESULT      2314
+#define CODE_H23Rx_EVBTC_AUTHREQ          2315
+#define CODE_H23Rx_EVBTC_PASSKEY          2316
+#define CODE_H23Rx_SHOW_DEBUG_INFO        2317
+#define CODE_H23Rx_SCAN_INQUIRE           2318
+#define CODE_H23Rx_SCAN_RESPOND           2319
+#define CODE_H23Rx_SCAN_RESPOND_ERR       2320
+#define CODE_H23Rx_CONNECT_INQUIRE        2321
+#define CODE_H23Rx_CONNECT_RESPOND        2322
+#define CODE_H23Rx_FINISHED_SCAN          2323
+#define CODE_H23Rx_UNKNOWN_CMD            2399
 
 
 // define code to trigger EVMSGAPP event
@@ -192,7 +191,7 @@ ENDSUB
 //------------------------------------------------------------------------------
 SUB DebugFunction(msg$)
   IF (1 == ENABLED_DEBUG_MESSAGE) THEN
-    SendMsgToMcu(CODE_H23R0_SHOW_DEBUG_INFO, msg$)
+    SendMsgToMcu(CODE_H23Rx_SHOW_DEBUG_INFO, msg$)
   ENDIF
 ENDSUB
 
@@ -410,7 +409,7 @@ SUB SendListBtcDevices(numberDevices)
     SPRINT #_index$, index
     SPRINT #_Rssi$, Rssi[index]
     strTemp$ = "[" + _index$ +"]\t"+ _Rssi$ +"\t" + NameDevices$[index] + "\r\n"
-    SendMsgToMcu(CODE_H23R0_SCAN_RESPOND, strTemp$)
+    SendMsgToMcu(CODE_H23Rx_SCAN_RESPOND, strTemp$)
     Delay_MS(50) //ms
   NEXT
 ENDSUB
@@ -426,19 +425,19 @@ FUNCTION OnUartCmd()
   tLenPar = SplitBosMsgFrame(UartCmd$, tCode, tPar$)
 
   SELECT tCode
-    CASE CODE_H23R0_SCAN_REQUIRE
+    CASE CODE_H23Rx_SCAN_INQUIRE
       rc = StartInqBtcDevices()
       BREAK
 
-    CASE CODE_H23R0_CONNECT_REQUIRE
+    CASE CODE_H23Rx_CONNECT_INQUIRE
       rc = StartSppConnect(tPar$)
       BREAK
 
-    CASE CODE_H23R0_LED_STATUS_ON
+    CASE CODE_H23Rx_LED_STATUS_ON
       rc = LedOn()
       BREAK
 
-    CASE CODE_H23R0_LED_STATUS_OFF
+    CASE CODE_H23Rx_LED_STATUS_OFF
       rc = LedOff()
       BREAK
 
@@ -458,7 +457,8 @@ SUB OnStartup()
   rc = GpioSetFunc(LED_BTC_D2, 2, 0) // DIGITAL_OUT; Initial output to LOW
 
   // Set friendly name
-  strTempNameBt$ = BTC_FRIENDLY_NAME
+  strTempNameBt$ = SysInfo$(14)
+  strTempNameBt$ = BTC_FRIENDLY_NAME + StrHexize$(strTempNameBt$)
   rc = BtcSetFriendlyName(strTempNameBt$)
 
   // Configure discoverability mode
@@ -482,7 +482,6 @@ SUB OnStartup()
   rc = BtcInquiryConfig(2, MAX_SCAN_NUMBER_DEVICES) // Max number of inquiry responses to receive
 
   // Set friendly name
-  strTempNameBt$ = BTC_FRIENDLY_NAME
   rc = BtcSetFriendlyName(strTempNameBt$)
 
   // setting UART
@@ -605,7 +604,7 @@ FUNCTION HandlerPairRes(nRes)
 
   SPRINT #_nRes$, nRes
   strTemp$ = strTemp$ + "\t" + _nRes$
-  SendMsgToMcu(CODE_H23R0_CONNECT_RESPOND, strTemp$)
+  SendMsgToMcu(CODE_H23Rx_CONNECT_RESPOND, strTemp$)
 ENDFUNC 1
 
 //------------------------------------------------------------------------------
@@ -657,14 +656,14 @@ FUNCTION CallMsgApp(msgID, cmd)
       SendListBtcDevices(IndexInqScan - 1)
     ELSE
       _str$ = "No devices\r\n"
-      SendMsgToMcu(CODE_H23R0_SCAN_RESPOND_ERR, _str$)
+      SendMsgToMcu(CODE_H23Rx_SCAN_RESPOND_ERR, _str$)
     ENDIF
     // Notify message to close transmission section
     _str$ = "\t" + _msgId$ + "\t" + _cmd$
-    SendMsgToMcu(CODE_H23R0_FINISHED_SCAN, _str$)
+    SendMsgToMcu(CODE_H23Rx_FINISHED_SCAN, _str$)
   ELSEIF (BTC_APP_INVALID_PARAMETER == msgID) THEN
     _str$ = "Invalid input parameter:\t" + _cmd$
-    SendMsgToMcu(CODE_H23R0_UNKNOWN_CMD, _str$)
+    SendMsgToMcu(CODE_H23Rx_UNKNOWN_CMD, _str$)
   ELSE
     _str$ = "command"
   ENDIF

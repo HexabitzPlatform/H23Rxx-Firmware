@@ -75,6 +75,7 @@ Module_Status btVspMode(Module_Status inputVspMode);
 /* Create CLI commands --------------------------------------------------------*/
 
 static portBASE_TYPE btGetInfoCommand( int8_t *pcWriteBuffer, size_t xWriteBufferLen, const int8_t *pcCommandString );
+static portBASE_TYPE btResetCommand( int8_t *pcWriteBuffer, size_t xWriteBufferLen, const int8_t *pcCommandString );
 static portBASE_TYPE btDownloadScriptCommand( int8_t *pcWriteBuffer, size_t xWriteBufferLen, const int8_t *pcCommandString );
 static portBASE_TYPE btRunScriptCommand( int8_t *pcWriteBuffer, size_t xWriteBufferLen, const int8_t *pcCommandString );
 static portBASE_TYPE btVspModeCommand( int8_t *pcWriteBuffer, size_t xWriteBufferLen, const int8_t *pcCommandString );
@@ -88,6 +89,15 @@ const CLI_Command_Definition_t btGetInfoCommandDefinition =
 	( const int8_t * ) "bt-info", /* The command string to type. */
 	( const int8_t * ) "(H23Rx) bt-info:\r\n Get BT900 module information\r\n\r\n",
 	btGetInfoCommand, /* The function to run. */
+	0 /* No parameters are expected. */
+};
+
+/* CLI command structure : bt-reset */
+const CLI_Command_Definition_t btResetCommandDefinition =
+{
+	( const int8_t * ) "bt-reset", /* The command string to type. */
+	( const int8_t * ) "(H23Rx) bt-reset:\r\n Reset BT900 module\r\n\r\n",
+	btResetCommand, /* The function to run. */
 	0 /* No parameters are expected. */
 };
 
@@ -464,6 +474,7 @@ Module_Status Module_MessagingTask(uint16_t code, uint8_t port, uint8_t src, uin
 void RegisterModuleCLICommands(void)
 {
 	FreeRTOS_CLIRegisterCommand( &btGetInfoCommandDefinition);
+	FreeRTOS_CLIRegisterCommand( &btResetCommandDefinition);
 	FreeRTOS_CLIRegisterCommand( &btDownloadScriptCommandDefinition);
 	FreeRTOS_CLIRegisterCommand( &btRunScriptCommandDefinition);
 	FreeRTOS_CLIRegisterCommand( &btVspModeCommandDefinition);
@@ -740,6 +751,29 @@ static portBASE_TYPE btGetInfoCommand( int8_t *pcWriteBuffer, size_t xWriteBuffe
 	return pdFALSE;
 }
 
+/* -----------------------------------------------------------------------
+	|															Commands																 	|
+   -----------------------------------------------------------------------
+*/
+static portBASE_TYPE btResetCommand( int8_t *pcWriteBuffer, size_t xWriteBufferLen, const int8_t *pcCommandString )
+{
+	/* Remove compile time warnings about unused parameters, and check the
+	write buffer is not NULL.  NOTE - for simplicity, this example assumes the
+	write buffer length is adequate, so does not check for buffer overflows. */
+	( void ) pcCommandString;
+	( void ) xWriteBufferLen;
+	configASSERT( pcWriteBuffer );
+
+	/* Reset BT900 module */
+
+	sprintf( ( char * ) pcWriteBuffer, "Reset BT900 module\r\n");
+	
+	btResetBt900Module();
+
+	/* There is no more data to return after this single string, so return pdFALSE. */
+	return pdFALSE;
+}
+
 static portBASE_TYPE btDownloadScriptCommand( int8_t *pcWriteBuffer, size_t xWriteBufferLen, const int8_t *pcCommandString )
 {
 	Module_Status result = H23Rx_OK;
@@ -858,7 +892,7 @@ static portBASE_TYPE btDeleteScriptCommand( int8_t *pcWriteBuffer, size_t xWrite
 {
 	Module_Status result = H23Rx_OK;
 
-	static const uint8_t *pcMsgDelFirmware = ( uint8_t * ) "at&f *\r\n";
+	static const uint8_t *pcMsgDelFirmware = ( uint8_t * ) "at&f*\r\n";
 	static const int8_t *pcMessageWrongParam = ( int8_t * ) "Failed to delete current smartBASIC script\r\n";
 
 	/* Remove compile time warnings about unused parameters, and check the
@@ -869,8 +903,6 @@ static portBASE_TYPE btDeleteScriptCommand( int8_t *pcWriteBuffer, size_t xWrite
 
 	sprintf( ( char * ) pcWriteBuffer, "Current smartBASIC script deleted successfuly\r\n");
 
-	/* Set VSP mode */
-	result = btVspMode(H23Rx_RUN_VspCommandMode);
 	/* Save VSP mode to EEPROM */
 	EE_WriteVariable(VirtAddVarTab[_EE_H23xVSP], H23Rx_RUN_VspCommandMode);
 	/* waiting BT900 reset */
