@@ -1,5 +1,5 @@
 /*
-    BitzOS (BOS) V0.1.5 - Copyright (C) 2017-2018 Hexabitz
+    BitzOS (BOS) V0.1.6 - Copyright (C) 2017-2019 Hexabitz
     All rights reserved
 
     File Name     : H23Rx.h
@@ -116,6 +116,8 @@
 	#define	_BT_HOST_WKUP_PIN				GPIO_PIN_12
 	#define	_BT_HOST_WKUP_PORT			GPIOB
 #endif
+
+#define NUM_MODULE_PARAMS		1
 
 /* H23R0_Status Type Definition */
 typedef enum

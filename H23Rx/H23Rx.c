@@ -1,5 +1,5 @@
 /*
-    BitzOS (BOS) V0.1.5 - Copyright (C) 2017-2018 Hexabitz
+    BitzOS (BOS) V0.1.6 - Copyright (C) 2017-2019 Hexabitz
     All rights reserved
 
     File Name     : H23Rx.c
@@ -36,6 +36,9 @@ UART_HandleTypeDef huart3;
 UART_HandleTypeDef huart4;
 UART_HandleTypeDef huart5;
 UART_HandleTypeDef huart6;
+
+/* Module exported parameters ------------------------------------------------*/
+module_param_t modParam[NUM_MODULE_PARAMS] = {{.paramPtr=NULL, .paramFormat=FMT_FLOAT, .paramName=""}};
 
 /* Private variables ---------------------------------------------------------*/
 
