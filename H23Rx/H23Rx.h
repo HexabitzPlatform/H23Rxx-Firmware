@@ -181,36 +181,6 @@ extern void MX_USART6_UART_Init(void);
 /* handler for control bluetooth module task */
 extern TaskHandle_t ControlBluetoothTaskHandle;
 
-/* -----------------------------------------------------------------------
-	|														Message Codes	 														 	|
-   -----------------------------------------------------------------------
-*/
-
-#define CODE_H23Rx_GET_INFO               2300
-#define CODE_H23Rx_DOWNLOAD_SCRIPT_OTA    2301
-#define CODE_H23Rx_DOWNLOAD_SCRIPT_UART   2302
-#define CODE_H23Rx_RUN_AUTORUN_SCRIPT     2303
-#define CODE_H23Rx_VSP_COMMAND_MODE       2304
-#define CODE_H23Rx_VSP_BRIDGE_MODE        2305
-#define CODE_H23Rx_SPP_MODE               2306
-#define CODE_H23Rx_LED_STATUS_ON          2307
-#define CODE_H23Rx_LED_STATUS_OFF         2308
-#define CODE_H23Rx_BTC_DEL_ALL_DATA_SEG   2309
-#define CODE_H23Rx_EVBTC_SPPCONN          2310
-#define CODE_H23Rx_EVBTC_SPPDISCON        2311
-#define CODE_H23Rx_EVBTC_PAIR_REQUEST     2312
-#define CODE_H23Rx_EVBTC_PIN_REQUEST      2313
-#define CODE_H23Rx_EVBTC_PAIR_RESULT      2314
-#define CODE_H23Rx_EVBTC_AUTHREQ          2315
-#define CODE_H23Rx_EVBTC_PASSKEY          2316
-#define CODE_H23Rx_SHOW_DEBUG_INFO        2317
-#define CODE_H23Rx_SCAN_INQUIRE           2318
-#define CODE_H23Rx_SCAN_RESPOND           2319
-#define CODE_H23Rx_SCAN_RESPOND_ERR       2320
-#define CODE_H23Rx_CONNECT_INQUIRE        2321
-#define CODE_H23Rx_CONNECT_RESPOND        2322
-#define CODE_H23Rx_FINISHED_SCAN          2323
-#define CODE_H23Rx_UNKNOWN_CMD            2399
 
 /* -----------------------------------------------------------------------
 	|																APIs	 																 	|

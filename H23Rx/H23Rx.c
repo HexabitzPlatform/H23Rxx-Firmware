@@ -57,6 +57,7 @@ static uint8_t stateScanDevices = 0;
 static uint8_t dstModule = 0;
 static uint8_t listBtcDevices[MAX_SCAN_NUMBER_DEVICES][MAX_SSID_SIZE];
 static uint8_t indexBtcDevice = 0;
+static uint8_t scriptPort = 0;
 
 EventGroupHandle_t handleUartTerminal = NULL;
 TaskHandle_t ControlBluetoothTaskHandle = NULL;
@@ -450,14 +451,14 @@ Module_Status Module_MessagingTask(uint16_t code, uint8_t port, uint8_t src, uin
         {
           memcpy((char *)&messageParams[0], (char *)pcMessageWrongParam, strlen((char *)pcMessageWrongParam));
           /* Send response */
-          SendMessageToModule(src, CODE_CLI_response, strlen((char *)pcMessageWrongParam));
+          SendMessageToModule(src, CODE_CLI_RESPONSE, strlen((char *)pcMessageWrongParam));
         }
       }
       else
       {
         memcpy((char *)&messageParams[0], (char *)pcMessageMustScan, strlen((char *)pcMessageMustScan));
         /* Send response */
-        SendMessageToModule(src, CODE_CLI_response, strlen((char *)pcMessageMustScan));
+        SendMessageToModule(src, CODE_CLI_RESPONSE, strlen((char *)pcMessageMustScan));
       }
       dstModule = src;
       break;
@@ -519,8 +520,8 @@ void btcDmaStreamDownloadScript(TimerHandle_t xTimer)
 	tid = ( uint32_t ) pvTimerGetTimerID( xTimer );
 	if (23 == tid)
 	{
-		StopPortPortDMA1();
-		StopPortPortDMA3();
+		StopStreamDMA(PORT_BTC_CONN);
+		StopStreamDMA(scriptPort);
 	}
 
 	/* create event to close update script command */
@@ -571,7 +572,7 @@ void btSendMsgToModule(uint8_t dst, uint8_t *pStr, uint8_t lenStr)
 	if (dst) {
 		memcpy(messageParams, (char *)pStr, (size_t)lenStr);
 		/* Send response */
-		SendMessageToModule(dst, CODE_CLI_response, (size_t)lenStr);
+		SendMessageToModule(dst, CODE_CLI_RESPONSE, (size_t)lenStr);
 	}
 }
 
@@ -647,6 +648,7 @@ Module_Status btDownloadScript(Module_Status method, uint8_t port)
 	}
 	else if (H23Rx_RUN_DownloadScriptViaUart == method)
 	{
+		scriptPort = port;
 		/* update new smartBASIC script via uart method */
 		stateTransmitBtToMcu = 0;
 		/* setup pin to control BT900 module */
@@ -659,11 +661,9 @@ Module_Status btDownloadScript(Module_Status method, uint8_t port)
 		UpdateBaudrate(PcPort, 115200);
 
 		/* setup DMA stream */
-		PortPortDMA1_Setup(GetUart(PORT_BTC_CONN), GetUart(port), 1);
-		DMAStream1total = H23Rx_MAX_NUMBER_OF_DATA_DMA;
+		StartDMAstream(GetUart(PORT_BTC_CONN), GetUart(scriptPort), H23Rx_MAX_NUMBER_OF_DATA_DMA);
+		StartDMAstream(GetUart(scriptPort), GetUart(PORT_BTC_CONN), H23Rx_MAX_NUMBER_OF_DATA_DMA);
 
-		PortPortDMA3_Setup(GetUart(port), GetUart(PORT_BTC_CONN), 1);
-		DMAStream3total = H23Rx_MAX_NUMBER_OF_DATA_DMA;
 		/* Create a timeout timer */
 		xTimer = xTimerCreate( "StreamTimer", pdMS_TO_TICKS(30000), pdFALSE, ( void * ) 23, btcDmaStreamDownloadScript );
 		/* Start the timeout timer */
