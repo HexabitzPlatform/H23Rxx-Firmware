@@ -231,7 +231,7 @@ void Module_Init(void)
   MX_USART3_UART_Init();
 
 	/* Read VSP mode from EEPROM */
-	EE_ReadVariable(VirtAddVarTab[_EE_H23xVSP], &vsp_mode);
+	EE_ReadVariable(_EE_H23xVSP, &vsp_mode);
 	
 	/* BT800/BT900 EN_RST */
 	BT_RST_GPIO_Init();
@@ -655,7 +655,7 @@ Module_Status btDownloadScript(Module_Status method, uint8_t port)
 		/*btVspMode(H23Rx_RUN_VspCommandMode);*/
 		btVspMode(H23Rx_RUN_VspBridgeToUartMode);
 		/* Save VSP mode to EEPROM */
-		EE_WriteVariable(VirtAddVarTab[_EE_H23xVSP], H23Rx_RUN_VspBridgeToUartMode);
+		EE_WriteVariable(_EE_H23xVSP, H23Rx_RUN_VspBridgeToUartMode);
 		
 		/* Change baudrate to 115200 to match BT900 UART */
 		UpdateBaudrate(PcPort, 115200);
@@ -866,14 +866,14 @@ static portBASE_TYPE btVspModeCommand( int8_t *pcWriteBuffer, size_t xWriteBuffe
 	{
 		result = btVspMode(H23Rx_RUN_VspCommandMode);
 		/* Save VSP mode to EEPROM */
-		EE_WriteVariable(VirtAddVarTab[_EE_H23xVSP], H23Rx_RUN_VspCommandMode);
+		EE_WriteVariable(_EE_H23xVSP, H23Rx_RUN_VspCommandMode);
 		sprintf( ( char * ) pcWriteBuffer, ( char * ) pcMessageOK, "VSP command mode\r\n");
 	}
 	else if (!strncmp((const char *)pcParameterString1, "bridge", 6))
 	{
 		result = btVspMode(H23Rx_RUN_VspBridgeToUartMode);
 		/* Save VSP mode to EEPROM */
-		EE_WriteVariable(VirtAddVarTab[_EE_H23xVSP], H23Rx_RUN_VspBridgeToUartMode);
+		EE_WriteVariable(_EE_H23xVSP, H23Rx_RUN_VspBridgeToUartMode);
 		sprintf( ( char * ) pcWriteBuffer, ( char * ) pcMessageOK, "VSP Bridge-to-UART mode\r\n");
 	}
 	else
@@ -907,7 +907,7 @@ static portBASE_TYPE btDeleteScriptCommand( int8_t *pcWriteBuffer, size_t xWrite
 	sprintf( ( char * ) pcWriteBuffer, "Current smartBASIC script deleted successfuly\r\n");
 
 	/* Save VSP mode to EEPROM */
-	EE_WriteVariable(VirtAddVarTab[_EE_H23xVSP], H23Rx_RUN_VspCommandMode);
+	EE_WriteVariable(_EE_H23xVSP, H23Rx_RUN_VspCommandMode);
 	/* waiting BT900 reset */
 	Delay_ms(100);
 

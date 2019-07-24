@@ -13,6 +13,7 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "BOS.h"
+#include "H23Rx_MemoryMap.h"
 #include "H23Rx_uart.h"
 #include "H23Rx_gpio.h"
 #include "H23Rx_dma.h"
@@ -118,6 +119,11 @@
 #endif
 
 #define NUM_MODULE_PARAMS		1
+
+/* Module EEPROM Variables */
+
+// Module Addressing Space 500 - 599
+#define _EE_H23xVSP							500		// Temporary - H23Rx Bluetooth module VSP mode
 
 /* H23R0_Status Type Definition */
 typedef enum
