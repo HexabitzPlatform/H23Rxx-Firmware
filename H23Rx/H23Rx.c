@@ -254,7 +254,7 @@ void Module_Init(void)
   /* create a event group for UART port */
   handleUartTerminal = xEventGroupCreate();
 	/* Create the Bluetooth module task */
-	xTaskCreate(ControlBluetoothTask, (const char *) "ControlBluetooth", (2*configMINIMAL_STACK_SIZE), NULL, osPriorityNormal, &ControlBluetoothTaskHandle);
+	xTaskCreate(ControlBluetoothTask, (const char *) "ControlBluetooth", (2*configMINIMAL_STACK_SIZE), NULL, osPriorityNormal-osPriorityIdle, &ControlBluetoothTaskHandle);
 	/* By default, the BT900 will run in the "Self-contained Run mode" */
 	btRunScript();
 	/* btVspMode(H23Rx_RUN_VspBridgeToUartMode); */
