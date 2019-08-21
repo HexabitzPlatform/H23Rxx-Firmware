@@ -91,7 +91,7 @@ static portBASE_TYPE btConnectCommand( int8_t *pcWriteBuffer, size_t xWriteBuffe
 const CLI_Command_Definition_t btGetInfoCommandDefinition =
 {
 	( const int8_t * ) "bt-info", /* The command string to type. */
-	( const int8_t * ) "(H23Rx) bt-info:\r\n Get BT900 module information\r\n\r\n",
+	( const int8_t * ) "bt-info:\r\n Get BT900 module information\r\n\r\n",
 	btGetInfoCommand, /* The function to run. */
 	0 /* No parameters are expected. */
 };
@@ -100,7 +100,7 @@ const CLI_Command_Definition_t btGetInfoCommandDefinition =
 const CLI_Command_Definition_t btResetCommandDefinition =
 {
 	( const int8_t * ) "bt-reset", /* The command string to type. */
-	( const int8_t * ) "(H23Rx) bt-reset:\r\n Reset BT900 module\r\n\r\n",
+	( const int8_t * ) "bt-reset:\r\n Reset BT900 module\r\n\r\n",
 	btResetCommand, /* The function to run. */
 	0 /* No parameters are expected. */
 };
@@ -109,7 +109,7 @@ const CLI_Command_Definition_t btResetCommandDefinition =
 const CLI_Command_Definition_t btDownloadScriptCommandDefinition =
 {
 	( const int8_t * ) "bt-download-script", /* The command string to type. */
-	( const int8_t * ) "(H23Rx) bt-download-script:\r\n Download new $autorun$ script to BT900 module (1st parameter): ota or uart\r\n\r\n",
+	( const int8_t * ) "bt-download-script:\r\n Download new $autorun$ script to BT900 module (1st parameter): ota or uart\r\n\r\n",
 	btDownloadScriptCommand, /* The function to run. */
 	1 /* No parameters are expected. */
 };
@@ -118,7 +118,7 @@ const CLI_Command_Definition_t btDownloadScriptCommandDefinition =
 const CLI_Command_Definition_t btRunScriptCommandDefinition =
 {
 	( const int8_t * ) "bt-run-script", /* The command string to type. */
-	( const int8_t * ) "(H23Rx) bt-run-script:\r\n Restart BT900 with $autorun$ script\r\n\r\n",
+	( const int8_t * ) "bt-run-script:\r\n Restart BT900 with $autorun$ script\r\n\r\n",
 	btRunScriptCommand, /* The function to run. */
 	0 /* No parameters are expected. */
 };
@@ -127,7 +127,7 @@ const CLI_Command_Definition_t btRunScriptCommandDefinition =
 const CLI_Command_Definition_t btVspModeCommandDefinition =
 {
 	( const int8_t * ) "bt-vsp-mode", /* The command string to type. */
-	( const int8_t * ) "(H23Rx) bt-vsp-mode:\r\n Set VSP mode for BT900 module (1st parameter): command or bridge\r\n\r\n",
+	( const int8_t * ) "bt-vsp-mode:\r\n Set VSP mode for BT900 module (1st parameter): command or bridge\r\n\r\n",
 	btVspModeCommand, /* The function to run. */
 	1 /* No parameters are expected. */
 };
@@ -136,7 +136,7 @@ const CLI_Command_Definition_t btVspModeCommandDefinition =
 const CLI_Command_Definition_t btDeleteScriptCommandDefinition =
 {
 	( const int8_t * ) "bt-delete-script", /* The command string to type. */
-	( const int8_t * ) "(H23Rx) bt-delete-script:\r\n Delete current smartBASIC script on BT900. This should be called before writing a new script on the module\r\n\r\n",
+	( const int8_t * ) "bt-delete-script:\r\n Delete current smartBASIC script on BT900. This should be called before writing a new script on the module\r\n\r\n",
 	btDeleteScriptCommand, /* The function to run. */
 	0 /* No parameters are expected. */
 };
@@ -145,7 +145,7 @@ const CLI_Command_Definition_t btDeleteScriptCommandDefinition =
 const CLI_Command_Definition_t btScanCommandDefinition =
 {
 	( const int8_t * ) "scan", /* The command string to type. */
-	( const int8_t * ) "(H23Rx) scan:\r\n Scan nearby BLE devices and display them in a list along with their SSIDs and RSSI levels\r\n\r\n",
+	( const int8_t * ) "scan:\r\n Scan nearby BLE devices and display them in a list along with their SSIDs and RSSI levels\r\n\r\n",
 	btScanCommand, /* The function to run. */
 	0 /* One parameter is expected. */
 };
@@ -154,7 +154,7 @@ const CLI_Command_Definition_t btScanCommandDefinition =
 const CLI_Command_Definition_t btConnectCommandDefinition =
 {
 	( const int8_t * ) "connect", /* The command string to type. */
-	( const int8_t * ) "(H23Rx) connect:\r\n Connect to another bluetooth device \r\n\r\n",
+	( const int8_t * ) "connect:\r\n Connect to another bluetooth device \r\n\r\n",
 	btConnectCommand, /* The function to run. */
 	1 /* One parameter is expected. */
 };
