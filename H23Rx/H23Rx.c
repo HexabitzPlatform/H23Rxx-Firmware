@@ -388,7 +388,7 @@ void ControlBluetoothTask(void * argument)
 
 /* --- H23R0 message processing task
 */
-Module_Status Module_MessagingTask(uint16_t code, uint8_t port, uint8_t src, uint8_t dst)
+Module_Status Module_MessagingTask(uint16_t code, uint8_t port, uint8_t src, uint8_t dst, uint8_t shift)
 {
 	Module_Status result = H23Rx_OK;
 	static const int8_t *pcMessageWrongParam = ( int8_t * ) "Wrong parameter!\r\n";
@@ -440,11 +440,11 @@ Module_Status Module_MessagingTask(uint16_t code, uint8_t port, uint8_t src, uin
       if (1 == stateScanDevices)
       {
         /* dst - 1 byte | src - 1 byte | code - 2 bytes | crc - 1 byte */
-        lenPar = messageLength[port-1] - 5;
-        if ( ('[' == cMessage[port-1][5]) && (']' == cMessage[port-1][messageLength[port-1] - 2]) )
+        lenPar = messageLength[port-1] - shift;
+        if ( ('[' == cMessage[port-1][1+shift]) && (']' == cMessage[port-1][messageLength[port-1] - 2]) )
         {
           /* Send a control message to BT900 to run inquiry new bluetooth devices */
-          memcpy((char *)&messageParams[0], (char *)&cMessage[port-1][5], lenPar - 2);
+          memcpy((char *)&messageParams[0], (char *)&cMessage[port-1][1 + shift], lenPar - 2);
           SendMessageFromPort(PORT_BTC_CONN, 0, 0, CODE_H23Rx_CONNECT_INQUIRE, lenPar - 2);
         }
         else
