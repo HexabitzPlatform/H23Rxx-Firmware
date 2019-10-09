@@ -509,28 +509,6 @@ void btDisableHandshakeUart(void)
 
 /*-----------------------------------------------------------*/
 
-/* --- DMA stream timer callback that will be called after
- * 		 timeout event in btDownloadScript() function
-*/
-void btcDmaStreamDownloadScript(TimerHandle_t xTimer)
-{
-	uint32_t tid = 0;
-
-	/* close DMA stream */
-	tid = ( uint32_t ) pvTimerGetTimerID( xTimer );
-	if (23 == tid)
-	{
-		StopStreamDMA(PORT_BTC_CONN);
-		StopStreamDMA(scriptPort);
-	}
-
-	/* create event to close update script command */
-	stateTransmitBtToMcu = H23R0_BTC_CLOSE_CONNECTION;
-	xEventGroupSetBits(handleUartTerminal, EVENT_CLOSE_CONNECTION_BIT);
-}
-
-/*-----------------------------------------------------------*/
-
 /* --- Wait until script file is transmitted to Bluetooth module with a 30 second timeout
 */
 void btWaitEventFinishTransmission(void)
@@ -636,7 +614,6 @@ Module_Status btVspMode(Module_Status inputVspMode)
 Module_Status btDownloadScript(Module_Status method, uint8_t port)
 {
 	Module_Status result = H23Rx_OK;
-	TimerHandle_t xTimer = NULL;
 
 	/*btDisableHandshakeUart();*/
     btEnableHandshakeUart();
@@ -661,13 +638,7 @@ Module_Status btDownloadScript(Module_Status method, uint8_t port)
 		UpdateBaudrate(PcPort, 115200);
 
 		/* setup DMA stream */
-		StartDMAstream(GetUart(PORT_BTC_CONN), GetUart(scriptPort), H23Rx_MAX_NUMBER_OF_DATA_DMA);
-		StartDMAstream(GetUart(scriptPort), GetUart(PORT_BTC_CONN), H23Rx_MAX_NUMBER_OF_DATA_DMA);
-
-		/* Create a timeout timer */
-		xTimer = xTimerCreate( "StreamTimer", pdMS_TO_TICKS(30000), pdFALSE, ( void * ) 23, btcDmaStreamDownloadScript );
-		/* Start the timeout timer */
-		xTimerStart( xTimer, portMAX_DELAY );
+		StartScastDMAStream(PORT_BTC_CONN, myID, scriptPort, myID, BIDIRECTIONAL, H23Rx_MAX_NUMBER_OF_DATA_DMA, 0xFFFFFFFF, false);
 	}
 	else
 	{
