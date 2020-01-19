@@ -583,7 +583,7 @@ void CRC_Init(void)
   hcrc.Init.DefaultPolynomialUse = DEFAULT_POLYNOMIAL_ENABLE;
 	hcrc.Init.InputDataInversionMode = CRC_INPUTDATA_INVERSION_NONE;
 	hcrc.Init.OutputDataInversionMode = CRC_OUTPUTDATA_INVERSION_DISABLE;
-	hcrc.InputDataFormat = CRC_INPUTDATA_FORMAT_BYTES;
+	hcrc.InputDataFormat = CRC_INPUTDATA_FORMAT_WORDS;
 	HAL_CRC_Init(&hcrc);
 }
 
