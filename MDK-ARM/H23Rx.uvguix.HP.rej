@@ -1,0 +1,22 @@
+diff a/MDK-ARM/H23Rx.uvguix.HP b/MDK-ARM/H23Rx.uvguix.HP	(rejected hunks)
+@@ -15,17 +15,17 @@
+     <View>
+       <WinId>38003</WinId>
+       <ViewName>Registers</ViewName>
+-      <TableColWidths>115 45</TableColWidths>
++      <TableColWidths>122 122</TableColWidths>
+     </View>
+     <View>
+       <WinId>346</WinId>
+       <ViewName>Code Coverage</ViewName>
+-      <TableColWidths>673 160</TableColWidths>
++      <TableColWidths>673 425</TableColWidths>
+     </View>
+     <View>
+       <WinId>204</WinId>
+       <ViewName>Performance Analyzer</ViewName>
+-      <TableColWidths>833</TableColWidths>
++      <TableColWidths>750 124 124 100</TableColWidths>
+     </View>
+   </SECTreeCtrl>
+ 
