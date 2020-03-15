@@ -1,5 +1,5 @@
 /*
-    BitzOS (BOS) V0.1.6 - Copyright (C) 2017-2019 Hexabitz
+    BitzOS (BOS) V0.2.0 - Copyright (C) 2017-2019 Hexabitz
     All rights reserved
 
     File Name     : H23Rx.c
@@ -57,6 +57,7 @@ static uint8_t stateScanDevices = 0;
 static uint8_t dstModule = 0;
 static uint8_t listBtcDevices[MAX_SCAN_NUMBER_DEVICES][MAX_SSID_SIZE];
 static uint8_t indexBtcDevice = 0;
+static uint8_t scriptPort = 0;
 
 EventGroupHandle_t handleUartTerminal = NULL;
 TaskHandle_t ControlBluetoothTaskHandle = NULL;
@@ -90,7 +91,7 @@ static portBASE_TYPE btConnectCommand( int8_t *pcWriteBuffer, size_t xWriteBuffe
 const CLI_Command_Definition_t btGetInfoCommandDefinition =
 {
 	( const int8_t * ) "bt-info", /* The command string to type. */
-	( const int8_t * ) "(H23Rx) bt-info:\r\n Get BT900 module information\r\n\r\n",
+	( const int8_t * ) "bt-info:\r\n Get BT900 module information\r\n\r\n",
 	btGetInfoCommand, /* The function to run. */
 	0 /* No parameters are expected. */
 };
@@ -99,7 +100,7 @@ const CLI_Command_Definition_t btGetInfoCommandDefinition =
 const CLI_Command_Definition_t btResetCommandDefinition =
 {
 	( const int8_t * ) "bt-reset", /* The command string to type. */
-	( const int8_t * ) "(H23Rx) bt-reset:\r\n Reset BT900 module\r\n\r\n",
+	( const int8_t * ) "bt-reset:\r\n Reset BT900 module\r\n\r\n",
 	btResetCommand, /* The function to run. */
 	0 /* No parameters are expected. */
 };
@@ -108,7 +109,7 @@ const CLI_Command_Definition_t btResetCommandDefinition =
 const CLI_Command_Definition_t btDownloadScriptCommandDefinition =
 {
 	( const int8_t * ) "bt-download-script", /* The command string to type. */
-	( const int8_t * ) "(H23Rx) bt-download-script:\r\n Download new $autorun$ script to BT900 module (1st parameter): ota or uart\r\n\r\n",
+	( const int8_t * ) "bt-download-script:\r\n Download new $autorun$ script to BT900 module (1st parameter): ota or uart\r\n\r\n",
 	btDownloadScriptCommand, /* The function to run. */
 	1 /* No parameters are expected. */
 };
@@ -117,7 +118,7 @@ const CLI_Command_Definition_t btDownloadScriptCommandDefinition =
 const CLI_Command_Definition_t btRunScriptCommandDefinition =
 {
 	( const int8_t * ) "bt-run-script", /* The command string to type. */
-	( const int8_t * ) "(H23Rx) bt-run-script:\r\n Restart BT900 with $autorun$ script\r\n\r\n",
+	( const int8_t * ) "bt-run-script:\r\n Restart BT900 with $autorun$ script\r\n\r\n",
 	btRunScriptCommand, /* The function to run. */
 	0 /* No parameters are expected. */
 };
@@ -126,7 +127,7 @@ const CLI_Command_Definition_t btRunScriptCommandDefinition =
 const CLI_Command_Definition_t btVspModeCommandDefinition =
 {
 	( const int8_t * ) "bt-vsp-mode", /* The command string to type. */
-	( const int8_t * ) "(H23Rx) bt-vsp-mode:\r\n Set VSP mode for BT900 module (1st parameter): command or bridge\r\n\r\n",
+	( const int8_t * ) "bt-vsp-mode:\r\n Set VSP mode for BT900 module (1st parameter): command or bridge\r\n\r\n",
 	btVspModeCommand, /* The function to run. */
 	1 /* No parameters are expected. */
 };
@@ -135,7 +136,7 @@ const CLI_Command_Definition_t btVspModeCommandDefinition =
 const CLI_Command_Definition_t btDeleteScriptCommandDefinition =
 {
 	( const int8_t * ) "bt-delete-script", /* The command string to type. */
-	( const int8_t * ) "(H23Rx) bt-delete-script:\r\n Delete current smartBASIC script on BT900. This should be called before writing a new script on the module\r\n\r\n",
+	( const int8_t * ) "bt-delete-script:\r\n Delete current smartBASIC script on BT900. This should be called before writing a new script on the module\r\n\r\n",
 	btDeleteScriptCommand, /* The function to run. */
 	0 /* No parameters are expected. */
 };
@@ -144,7 +145,7 @@ const CLI_Command_Definition_t btDeleteScriptCommandDefinition =
 const CLI_Command_Definition_t btScanCommandDefinition =
 {
 	( const int8_t * ) "scan", /* The command string to type. */
-	( const int8_t * ) "(H23Rx) scan:\r\n Scan nearby BLE devices and display them in a list along with their SSIDs and RSSI levels\r\n\r\n",
+	( const int8_t * ) "scan:\r\n Scan nearby BLE devices and display them in a list along with their SSIDs and RSSI levels\r\n\r\n",
 	btScanCommand, /* The function to run. */
 	0 /* One parameter is expected. */
 };
@@ -153,7 +154,7 @@ const CLI_Command_Definition_t btScanCommandDefinition =
 const CLI_Command_Definition_t btConnectCommandDefinition =
 {
 	( const int8_t * ) "connect", /* The command string to type. */
-	( const int8_t * ) "(H23Rx) connect:\r\n Connect to another bluetooth device \r\n\r\n",
+	( const int8_t * ) "connect:\r\n Connect to another bluetooth device \r\n\r\n",
 	btConnectCommand, /* The function to run. */
 	1 /* One parameter is expected. */
 };
@@ -230,7 +231,7 @@ void Module_Init(void)
   MX_USART3_UART_Init();
 
 	/* Read VSP mode from EEPROM */
-	EE_ReadVariable(VirtAddVarTab[_EE_H23xVSP], &vsp_mode);
+	EE_ReadVariable(_EE_H23xVSP, &vsp_mode);
 	
 	/* BT800/BT900 EN_RST */
 	BT_RST_GPIO_Init();
@@ -253,7 +254,7 @@ void Module_Init(void)
   /* create a event group for UART port */
   handleUartTerminal = xEventGroupCreate();
 	/* Create the Bluetooth module task */
-	xTaskCreate(ControlBluetoothTask, (const char *) "ControlBluetooth", (2*configMINIMAL_STACK_SIZE), NULL, osPriorityNormal, &ControlBluetoothTaskHandle);
+	xTaskCreate(ControlBluetoothTask, (const char *) "ControlBluetooth", (2*configMINIMAL_STACK_SIZE), NULL, osPriorityNormal-osPriorityIdle, &ControlBluetoothTaskHandle);
 	/* By default, the BT900 will run in the "Self-contained Run mode" */
 	btRunScript();
 	/* btVspMode(H23Rx_RUN_VspBridgeToUartMode); */
@@ -387,7 +388,7 @@ void ControlBluetoothTask(void * argument)
 
 /* --- H23R0 message processing task
 */
-Module_Status Module_MessagingTask(uint16_t code, uint8_t port, uint8_t src, uint8_t dst)
+Module_Status Module_MessagingTask(uint16_t code, uint8_t port, uint8_t src, uint8_t dst, uint8_t shift)
 {
 	Module_Status result = H23Rx_OK;
 	static const int8_t *pcMessageWrongParam = ( int8_t * ) "Wrong parameter!\r\n";
@@ -439,25 +440,25 @@ Module_Status Module_MessagingTask(uint16_t code, uint8_t port, uint8_t src, uin
       if (1 == stateScanDevices)
       {
         /* dst - 1 byte | src - 1 byte | code - 2 bytes | crc - 1 byte */
-        lenPar = messageLength[port-1] - 5;
-        if ( ('[' == cMessage[port-1][5]) && (']' == cMessage[port-1][messageLength[port-1] - 2]) )
+        lenPar = messageLength[port-1] - shift;
+        if ( ('[' == cMessage[port-1][1+shift]) && (']' == cMessage[port-1][messageLength[port-1] - 2]) )
         {
           /* Send a control message to BT900 to run inquiry new bluetooth devices */
-          memcpy((char *)&messageParams[0], (char *)&cMessage[port-1][5], lenPar - 2);
+          memcpy((char *)&messageParams[0], (char *)&cMessage[port-1][1 + shift], lenPar - 2);
           SendMessageFromPort(PORT_BTC_CONN, 0, 0, CODE_H23Rx_CONNECT_INQUIRE, lenPar - 2);
         }
         else
         {
           memcpy((char *)&messageParams[0], (char *)pcMessageWrongParam, strlen((char *)pcMessageWrongParam));
           /* Send response */
-          SendMessageToModule(src, CODE_CLI_response, strlen((char *)pcMessageWrongParam));
+          SendMessageToModule(src, CODE_CLI_RESPONSE, strlen((char *)pcMessageWrongParam));
         }
       }
       else
       {
         memcpy((char *)&messageParams[0], (char *)pcMessageMustScan, strlen((char *)pcMessageMustScan));
         /* Send response */
-        SendMessageToModule(src, CODE_CLI_response, strlen((char *)pcMessageMustScan));
+        SendMessageToModule(src, CODE_CLI_RESPONSE, strlen((char *)pcMessageMustScan));
       }
       dstModule = src;
       break;
@@ -508,28 +509,6 @@ void btDisableHandshakeUart(void)
 
 /*-----------------------------------------------------------*/
 
-/* --- DMA stream timer callback that will be called after
- * 		 timeout event in btDownloadScript() function
-*/
-void btcDmaStreamDownloadScript(TimerHandle_t xTimer)
-{
-	uint32_t tid = 0;
-
-	/* close DMA stream */
-	tid = ( uint32_t ) pvTimerGetTimerID( xTimer );
-	if (23 == tid)
-	{
-		StopPortPortDMA1();
-		StopPortPortDMA3();
-	}
-
-	/* create event to close update script command */
-	stateTransmitBtToMcu = H23R0_BTC_CLOSE_CONNECTION;
-	xEventGroupSetBits(handleUartTerminal, EVENT_CLOSE_CONNECTION_BIT);
-}
-
-/*-----------------------------------------------------------*/
-
 /* --- Wait until script file is transmitted to Bluetooth module with a 30 second timeout
 */
 void btWaitEventFinishTransmission(void)
@@ -571,7 +550,7 @@ void btSendMsgToModule(uint8_t dst, uint8_t *pStr, uint8_t lenStr)
 	if (dst) {
 		memcpy(messageParams, (char *)pStr, (size_t)lenStr);
 		/* Send response */
-		SendMessageToModule(dst, CODE_CLI_response, (size_t)lenStr);
+		SendMessageToModule(dst, CODE_CLI_RESPONSE, (size_t)lenStr);
 	}
 }
 
@@ -635,7 +614,6 @@ Module_Status btVspMode(Module_Status inputVspMode)
 Module_Status btDownloadScript(Module_Status method, uint8_t port)
 {
 	Module_Status result = H23Rx_OK;
-	TimerHandle_t xTimer = NULL;
 
 	/*btDisableHandshakeUart();*/
     btEnableHandshakeUart();
@@ -647,27 +625,20 @@ Module_Status btDownloadScript(Module_Status method, uint8_t port)
 	}
 	else if (H23Rx_RUN_DownloadScriptViaUart == method)
 	{
+		scriptPort = port;
 		/* update new smartBASIC script via uart method */
 		stateTransmitBtToMcu = 0;
 		/* setup pin to control BT900 module */
 		/*btVspMode(H23Rx_RUN_VspCommandMode);*/
 		btVspMode(H23Rx_RUN_VspBridgeToUartMode);
 		/* Save VSP mode to EEPROM */
-		EE_WriteVariable(VirtAddVarTab[_EE_H23xVSP], H23Rx_RUN_VspBridgeToUartMode);
+		EE_WriteVariable(_EE_H23xVSP, H23Rx_RUN_VspBridgeToUartMode);
 		
 		/* Change baudrate to 115200 to match BT900 UART */
 		UpdateBaudrate(PcPort, 115200);
 
 		/* setup DMA stream */
-		PortPortDMA1_Setup(GetUart(PORT_BTC_CONN), GetUart(port), 1);
-		DMAStream1total = H23Rx_MAX_NUMBER_OF_DATA_DMA;
-
-		PortPortDMA3_Setup(GetUart(port), GetUart(PORT_BTC_CONN), 1);
-		DMAStream3total = H23Rx_MAX_NUMBER_OF_DATA_DMA;
-		/* Create a timeout timer */
-		xTimer = xTimerCreate( "StreamTimer", pdMS_TO_TICKS(30000), pdFALSE, ( void * ) 23, btcDmaStreamDownloadScript );
-		/* Start the timeout timer */
-		xTimerStart( xTimer, portMAX_DELAY );
+		StartScastDMAStream(PORT_BTC_CONN, myID, scriptPort, myID, BIDIRECTIONAL, H23Rx_MAX_NUMBER_OF_DATA_DMA, 0xFFFFFFFF, false);
 	}
 	else
 	{
@@ -866,14 +837,14 @@ static portBASE_TYPE btVspModeCommand( int8_t *pcWriteBuffer, size_t xWriteBuffe
 	{
 		result = btVspMode(H23Rx_RUN_VspCommandMode);
 		/* Save VSP mode to EEPROM */
-		EE_WriteVariable(VirtAddVarTab[_EE_H23xVSP], H23Rx_RUN_VspCommandMode);
+		EE_WriteVariable(_EE_H23xVSP, H23Rx_RUN_VspCommandMode);
 		sprintf( ( char * ) pcWriteBuffer, ( char * ) pcMessageOK, "VSP command mode\r\n");
 	}
 	else if (!strncmp((const char *)pcParameterString1, "bridge", 6))
 	{
 		result = btVspMode(H23Rx_RUN_VspBridgeToUartMode);
 		/* Save VSP mode to EEPROM */
-		EE_WriteVariable(VirtAddVarTab[_EE_H23xVSP], H23Rx_RUN_VspBridgeToUartMode);
+		EE_WriteVariable(_EE_H23xVSP, H23Rx_RUN_VspBridgeToUartMode);
 		sprintf( ( char * ) pcWriteBuffer, ( char * ) pcMessageOK, "VSP Bridge-to-UART mode\r\n");
 	}
 	else
@@ -907,7 +878,7 @@ static portBASE_TYPE btDeleteScriptCommand( int8_t *pcWriteBuffer, size_t xWrite
 	sprintf( ( char * ) pcWriteBuffer, "Current smartBASIC script deleted successfuly\r\n");
 
 	/* Save VSP mode to EEPROM */
-	EE_WriteVariable(VirtAddVarTab[_EE_H23xVSP], H23Rx_RUN_VspCommandMode);
+	EE_WriteVariable(_EE_H23xVSP, H23Rx_RUN_VspCommandMode);
 	/* waiting BT900 reset */
 	Delay_ms(100);
 

@@ -33,7 +33,7 @@
   */
 
 /*
-		MODIFIED by Hexabitz for BitzOS (BOS) V0.1.6 - Copyright (C) 2017-2019 Hexabitz
+		MODIFIED by Hexabitz for BitzOS (BOS) V0.2.0 - Copyright (C) 2017-2019 Hexabitz
     All rights reserved
 */
 
@@ -417,16 +417,36 @@ HAL_StatusTypeDef writePxITMutex(uint8_t port, char *buffer, uint16_t n, uint32_
 	return result;
 }
 
-/* --- Update baudrate for this port ---
+/* --- Non-blocking (DMA-based) write protected with a semaphore --- 
+*/
+HAL_StatusTypeDef writePxDMAMutex(uint8_t port, char *buffer, uint16_t n, uint32_t mutexTimeout)
+{
+	HAL_StatusTypeDef result = HAL_ERROR; 
+	UART_HandleTypeDef* hUart = GetUart(port);
+
+	if (hUart != NULL) {	
+		/* Wait for the mutex to be available. */
+		if (osSemaphoreWait(PxTxSemaphoreHandle[port], mutexTimeout) == osOK) {
+			/* Setup TX DMA on this port */
+			DMA_MSG_TX_Setup(hUart);
+			/* Transmit the message */
+			result = HAL_UART_Transmit_DMA(hUart, (uint8_t *)buffer, n);
+		}
+	}
+	
+	return result;
+}
+
+/* --- Update baudrate for this port --- 
 */
 BOS_Status UpdateBaudrate(uint8_t port, uint32_t baudrate)
 {
-	BOS_Status result = BOS_OK;
+	BOS_Status result = BOS_OK; 
 	UART_HandleTypeDef *huart = GetUart(port);
 
 	huart->Init.BaudRate = baudrate;
 	HAL_UART_Init(huart);
-
+	
 	return result;
 }
 
