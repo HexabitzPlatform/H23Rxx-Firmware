@@ -615,7 +615,7 @@
             <File>
               <FileName>startup_stm32f091xc.s</FileName>
               <FileType>2</FileType>
-              <FilePath>..\H23Rx\startup_stm32f091xc.s</FilePath>
+              <FilePath>..\H23Rx\arm\startup_stm32f091xc.s</FilePath>
             </File>
           </Files>
         </Group>
