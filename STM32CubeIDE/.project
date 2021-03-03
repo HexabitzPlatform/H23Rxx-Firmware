@@ -227,9 +227,9 @@
 			<locationURI>PARENT-1-PROJECT_LOC/H23Rx/H23Rx_uart.h</locationURI>
 		</link>
 		<link>
-			<name>H23Rx/gcc</name>
-			<type>2</type>
-			<locationURI>virtual:/virtual</locationURI>
+			<name>H23Rx/startup_stm32f091xc.s</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/H23Rx/startup_stm32f091xc.s</locationURI>
 		</link>
 		<link>
 			<name>H23Rx/stm32f0xx_hal_conf.h</name>
@@ -275,11 +275,6 @@
 			<name>User/topology_1.h</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/User/topology_1.h</locationURI>
-		</link>
-		<link>
-			<name>H23Rx/gcc/startup_stm32f091xc.s</name>
-			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/H23Rx/gcc/startup_stm32f091xc.s</locationURI>
 		</link>
 		<link>
 			<name>Thirdparty/CMSIS/Device</name>
