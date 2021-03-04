@@ -5327,7 +5327,7 @@ LOAD c:/st/stm32cubeide_1.2.0/stm32cubeide/plugins/com.st.stm32cube.ide.mcu.exte
  .debug_ranges  0x00000000000022d0       0x50 Thirdparty/STM32F0xx_HAL_Driver/Src/stm32f0xx_hal_uart_ex.o
  .debug_ranges  0x0000000000002320       0x18 User/main.o
 
-.debug_line     0x0000000000000000    0x299c4
+.debug_line     0x0000000000000000    0x299c0
  .debug_line    0x0000000000000000     0x2ace BOS/BOS.o
  .debug_line    0x0000000000002ace     0x10ca BOS/BOS_CLI.o
  .debug_line    0x0000000000003b98     0x259f BOS/BOS_CLIcommands.o
@@ -5373,7 +5373,7 @@ LOAD c:/st/stm32cubeide_1.2.0/stm32cubeide/plugins/com.st.stm32cube.ide.mcu.exte
  .debug_line    0x00000000000260a7     0x128d Thirdparty/STM32F0xx_HAL_Driver/Src/stm32f0xx_hal_tim_ex.o
  .debug_line    0x0000000000027334     0x17d7 Thirdparty/STM32F0xx_HAL_Driver/Src/stm32f0xx_hal_uart.o
  .debug_line    0x0000000000028b0b      0x8c2 Thirdparty/STM32F0xx_HAL_Driver/Src/stm32f0xx_hal_uart_ex.o
- .debug_line    0x00000000000293cd      0x5f7 User/main.o
+ .debug_line    0x00000000000293cd      0x5f3 User/main.o
 
 .debug_str      0x0000000000000000     0xa4d9
  .debug_str     0x0000000000000000     0x1fe9 BOS/BOS.o

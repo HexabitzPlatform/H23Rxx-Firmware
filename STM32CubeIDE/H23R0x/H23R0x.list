@@ -37,17 +37,17 @@ Idx Name          Size      VMA       LMA       File off  Algn
                   CONTENTS, READONLY, DEBUGGING, OCTETS
  16 .debug_ranges 00002338  00000000  00000000  000b10f0  2**3
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 17 .debug_line   000299c4  00000000  00000000  000b3428  2**0
+ 17 .debug_line   000299c0  00000000  00000000  000b3428  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 18 .debug_str    0000a4d9  00000000  00000000  000dcdec  2**0
+ 18 .debug_str    0000a4d9  00000000  00000000  000dcde8  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 19 .comment      00000053  00000000  00000000  000e72c5  2**0
+ 19 .comment      00000053  00000000  00000000  000e72c1  2**0
                   CONTENTS, READONLY
- 20 .debug_frame  00006974  00000000  00000000  000e7318  2**2
+ 20 .debug_frame  00006974  00000000  00000000  000e7314  2**2
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 21 .stab         000000cc  00000000  00000000  000edc8c  2**2
+ 21 .stab         000000cc  00000000  00000000  000edc88  2**2
                   CONTENTS, READONLY, DEBUGGING
- 22 .stabstr      000001b9  00000000  00000000  000edd58  2**0
+ 22 .stabstr      000001b9  00000000  00000000  000edd54  2**0
                   CONTENTS, READONLY, DEBUGGING
 
 Disassembly of section .text:
@@ -45913,8 +45913,8 @@ int main(void)
 
   /* Initialize all user peripherals */
 
-	/* Initialize BitzOS */
-	BOS_Init();
+  /* Initialize BitzOS */
+  BOS_Init();
  80126a0:	f7f1 fc9c 	bl	8003fdc <BOS_Init>
 
   /* Call init function for freertos objects (in freertos.c) */
