@@ -657,10 +657,6 @@ void RegisterModuleCLICommands(void)
 	FreeRTOS_CLIRegisterCommand( &btConnectCommandDefinition);
 }
 
-void ExecuteMonitor(void){
-
-}
-
 /*-----------------------------------------------------------*/
 
 /* --- Enable CTS/RTS flow control
