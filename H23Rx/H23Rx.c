@@ -1,10 +1,10 @@
 /*
-    BitzOS (BOS) V0.2.4 - Copyright (C) 2017-2021 Hexabitz
+    BitzOS (BOS) V0.2.5 - Copyright (C) 2017-2021 Hexabitz
     All rights reserved
 
     File Name     : H23Rx.c
     Description   : Source code for module H23R0/H23R1.
-										Bluetooth module (BT800/BT900)
+				 	module (BT800/BT900)
 
 		Required MCU resources :
 
@@ -382,7 +382,7 @@ void sendListBtcDevices(uint8_t type, uint8_t dst)
 
 /* --- H23R0 module initialization.
 */
-void Module_Init(void)
+void Module_Peripheral_Init(void)
 {
 	uint16_t vsp_mode;
 	

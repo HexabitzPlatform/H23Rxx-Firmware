@@ -4,7 +4,7 @@
 
     File Name     : H23Rx.h
     Description   : Header file for module H23R0/H23R1.
-										Bluetooth module (BT800/BT900)
+					Bluetooth module (BT800/BT900)
 */
 
 /* Define to prevent recursive inclusion -------------------------------------*/
@@ -89,23 +89,23 @@
 /* Module-specific Definitions */
 #define	USART3_TX_PIN			GPIO_PIN_10
 #define	USART3_RX_PIN			GPIO_PIN_11
-#define	USART3_RTS_PIN		GPIO_PIN_1
-#define	USART3_CTS_PIN		GPIO_PIN_6
-#define	USART3_TX_PORT		GPIOB
-#define	USART3_RX_PORT		GPIOB
-#define	USART3_RTS_PORT		GPIOB
-#define	USART3_CTS_PORT		GPIOA
-#define	USART3_AF					GPIO_AF4_USART3
+#define	USART3_RTS_PIN			GPIO_PIN_1
+#define	USART3_CTS_PIN			GPIO_PIN_6
+#define	USART3_TX_PORT			GPIOB
+#define	USART3_RX_PORT			GPIOB
+#define	USART3_RTS_PORT			GPIOB
+#define	USART3_CTS_PORT			GPIOA
+#define	USART3_AF				GPIO_AF4_USART3
 #ifdef H23R0
 	#define	_BT_RST_PIN			GPIO_PIN_15
 	#define	_BT_RST_PORT		GPIOB
   /* to be defined in future */
-	#define	_BT_VSP_PIN							GPIO_PIN_14
-	#define	_BT_VSP_PORT						GPIOB
-	#define	_BT_MODE_PIN						GPIO_PIN_7
-	#define	_BT_MODE_PORT						GPIOA
-	#define	_BT_HOST_WKUP_PIN				GPIO_PIN_12
-	#define	_BT_HOST_WKUP_PORT			GPIOB
+	#define	_BT_VSP_PIN			GPIO_PIN_14
+	#define	_BT_VSP_PORT		GPIOB
+	#define	_BT_MODE_PIN		GPIO_PIN_7
+	#define	_BT_MODE_PORT		GPIOA
+	#define	_BT_HOST_WKUP_PIN	GPIO_PIN_12
+	#define	_BT_HOST_WKUP_PORT	GPIOB
 #endif
 #ifdef H23R1
 	#define	_BT_RST_PIN							GPIO_PIN_2
@@ -114,8 +114,8 @@
 	#define	_BT_VSP_PORT						GPIOB
 	#define	_BT_MODE_PIN						GPIO_PIN_7
 	#define	_BT_MODE_PORT						GPIOA
-	#define	_BT_HOST_WKUP_PIN				GPIO_PIN_12
-	#define	_BT_HOST_WKUP_PORT			GPIOB
+	#define	_BT_HOST_WKUP_PIN				    GPIO_PIN_12
+	#define	_BT_HOST_WKUP_PORT			        GPIOB
 #endif
 
 #define NUM_MODULE_PARAMS		1
@@ -196,13 +196,13 @@ extern TaskHandle_t ControlBluetoothTaskHandle;
 
 #if defined(H23R1) || defined(H23R0)
 	#define BT_SET_RST_PIN()				HAL_GPIO_WritePin(_BT_RST_PORT,_BT_RST_PIN,GPIO_PIN_SET)
-	#define BT_CLEAR_RST_PIN()			HAL_GPIO_WritePin(_BT_RST_PORT,_BT_RST_PIN,GPIO_PIN_RESET);
+	#define BT_CLEAR_RST_PIN()			    HAL_GPIO_WritePin(_BT_RST_PORT,_BT_RST_PIN,GPIO_PIN_RESET);
 
 	#define BT_SET_VSP_PIN()				HAL_GPIO_WritePin(_BT_VSP_PORT,_BT_VSP_PIN,GPIO_PIN_SET)
-	#define BT_CLEAR_VSP_PIN()			HAL_GPIO_WritePin(_BT_VSP_PORT,_BT_VSP_PIN,GPIO_PIN_RESET)
+	#define BT_CLEAR_VSP_PIN()			    HAL_GPIO_WritePin(_BT_VSP_PORT,_BT_VSP_PIN,GPIO_PIN_RESET)
 
 	#define BT_SET_MODE_PIN()				HAL_GPIO_WritePin(_BT_MODE_PORT,_BT_MODE_PIN,GPIO_PIN_SET)
-	#define BT_CLEAR_MODE_PIN()			HAL_GPIO_WritePin(_BT_MODE_PORT,_BT_MODE_PIN,GPIO_PIN_RESET)
+	#define BT_CLEAR_MODE_PIN()			    HAL_GPIO_WritePin(_BT_MODE_PORT,_BT_MODE_PIN,GPIO_PIN_RESET)
 #endif
 
 extern void resetBt900Module(void);
