@@ -1,5 +1,5 @@
 /*
- BitzOS (BOS) V0.2.6 - Copyright (C) 2017-2022 Hexabitz
+ BitzOS (BOS) V0.2.5 - Copyright (C) 2017-2021 Hexabitz
  All rights reserved
 
  File Name     : H23Rx_uart.h
@@ -20,6 +20,7 @@
 extern FlagStatus UartRxReady;
 extern FlagStatus UartTxReady;
 extern uint8_t PcPort;
+
 
 #ifndef __N
 	extern uint16_t arrayPortsDir[MaxNumOfModules];									/* Array ports directions */

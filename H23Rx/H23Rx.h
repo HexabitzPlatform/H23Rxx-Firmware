@@ -1,5 +1,5 @@
 /*
-    BitzOS (BOS) V0.2.6 - Copyright (C) 2017-2022 Hexabitz
+    BitzOS (BOS) V0.2.4 - Copyright (C) 2017-2021 Hexabitz
     All rights reserved
 
     File Name     : H23Rx.h
@@ -17,6 +17,81 @@
 #include "H23Rx_uart.h"
 #include "H23Rx_gpio.h"
 #include "H23Rx_dma.h"
+
+
+/* H23R0_Status Type Definition */
+typedef enum
+{
+  H23Rx_OK = 0,
+	H23Rx_ERR_UnknownMessage = 1,
+	H23Rx_ERR_WrongParams,
+	H23Rx_RUN_VspCommandMode,
+	H23Rx_RUN_VspBridgeToUartMode,
+	H23Rx_RUN_DownloadScriptViaOta,
+	H23Rx_RUN_DownloadScriptViaUart,
+	H23Rx_ERROR = 255
+} Module_Status;
+
+
+
+//BT900 constants:
+
+#define BT_Max_Number_Of_Devices 10
+#define BT_Max_Device_Name_Length 30
+#define BT_Device_Address_Length 12
+
+#define BT_Command_Buffer_Length 500
+
+
+/* BT900 variables and Data Structures: -------------------------------------------*/
+
+extern uint8_t BT_User_Buffer_Length;
+
+
+extern uint8_t BT_Devices_Name[BT_Max_Number_Of_Devices][BT_Max_Device_Name_Length];
+extern uint8_t BT_Devices_Address[BT_Max_Number_Of_Devices][BT_Device_Address_Length];
+extern uint8_t BT_Devices_Index;
+extern uint8_t BT_Rx;
+extern uint8_t BT_User_Buffer[192];
+extern uint8_t BT_User_Buffer_Index;
+extern uint8_t BT_Commands_Buffer[BT_Command_Buffer_Length];
+extern uint8_t BT_Commands_Buffer_Index;
+extern uint8_t BT_BOS_Index;
+
+extern uint8_t* BT_User_Buffer_ptr;
+extern uint8_t* BT_User_Buffer_beginning_ptr;
+extern uint8_t* BT_User_Buffer_Index_ptr;
+
+
+extern uint8_t BT_To_User_Buffer_flag;
+//1: Bluetooth To User_Buffer
+//0: Bluetooth To BOS Messaging Buffer
+
+extern uint8_t BT_Connection_flag;
+//1: Connected
+//0: Disconnected
+
+extern uint8_t BT_SPP_Mode;
+//0: SPP_Command_Mode
+//1: SPP_Bridge_Mode
+
+extern uint8_t BT_delete_connecting_char_flag;
+extern uint8_t BT_delete_disconnecting_char_flag;
+
+extern uint8_t BT_boot; //flag for sending name to BT900 Module on startup
+
+/*-------------------------------------------------------------------------------------*/
+
+
+/* BT900 Private Function Prototypes-------------------------------------------*/
+
+
+extern Module_Status BT_RUN_SCRIPT_MODE(void);
+extern Module_Status BT_Switch_To_SPP_Command_Mode(void);
+extern Module_Status BT_Switch_To_SPP_Bridge_Mode(void);
+
+
+/*-------------------------------------------------------------------*/
 
 /* Exported definitions -------------------------------------------------------*/
 
@@ -123,20 +198,18 @@
 /* Module EEPROM Variables */
 
 // Module Addressing Space 500 - 599
-#define _EE_H23xVSP							500		// Temporary - H23Rx Bluetooth module VSP mode
 
-/* H23R0_Status Type Definition */
-typedef enum
-{
-  H23Rx_OK = 0,
-	H23Rx_ERR_UnknownMessage = 1,
-	H23Rx_ERR_WrongParams,
-	H23Rx_RUN_VspCommandMode,
-	H23Rx_RUN_VspBridgeToUartMode,
-	H23Rx_RUN_DownloadScriptViaOta,
-	H23Rx_RUN_DownloadScriptViaUart,
-	H23Rx_ERROR = 255
-} Module_Status;
+#define _EE_H23x_Name_Length_Address			500		//H23Rx Bluetooth module Name Length
+#define _EE_H23x_Name_Beginning_Address			501
+/*Max name length: 30 character
+ * first name character Address: 501
+ * last name character Address: 530
+ */
+
+
+
+
+
 
 /* Indicator LED */
 #define _IND_LED_PORT										GPIOA
@@ -195,21 +268,33 @@ extern TaskHandle_t ControlBluetoothTaskHandle;
 */
 
 #if defined(H23R1) || defined(H23R0)
-	#define BT_SET_RST_PIN()				HAL_GPIO_WritePin(_BT_RST_PORT,_BT_RST_PIN,GPIO_PIN_SET)
-	#define BT_CLEAR_RST_PIN()			    HAL_GPIO_WritePin(_BT_RST_PORT,_BT_RST_PIN,GPIO_PIN_RESET);
-
-	#define BT_SET_VSP_PIN()				HAL_GPIO_WritePin(_BT_VSP_PORT,_BT_VSP_PIN,GPIO_PIN_SET)
-	#define BT_CLEAR_VSP_PIN()			    HAL_GPIO_WritePin(_BT_VSP_PORT,_BT_VSP_PIN,GPIO_PIN_RESET)
+//	#define BT_SET_RST_PIN()				HAL_GPIO_WritePin(_BT_RST_PORT,_BT_RST_PIN,GPIO_PIN_SET)
+//	#define BT_CLEAR_RST_PIN()			    HAL_GPIO_WritePin(_BT_RST_PORT,_BT_RST_PIN,GPIO_PIN_RESET)
+//
+//	#define BT_SET_VSP_PIN()				HAL_GPIO_WritePin(_BT_VSP_PORT,_BT_VSP_PIN,GPIO_PIN_SET)
+//	#define BT_CLEAR_VSP_PIN()			    HAL_GPIO_WritePin(_BT_VSP_PORT,_BT_VSP_PIN,GPIO_PIN_RESET)
 
 	#define BT_SET_MODE_PIN()				HAL_GPIO_WritePin(_BT_MODE_PORT,_BT_MODE_PIN,GPIO_PIN_SET)
 	#define BT_CLEAR_MODE_PIN()			    HAL_GPIO_WritePin(_BT_MODE_PORT,_BT_MODE_PIN,GPIO_PIN_RESET)
 #endif
 
-extern void resetBt900Module(void);
-extern Module_Status btUpdateScript(Module_Status method, uint8_t port);
-extern Module_Status btSetVspMode(int8_t inputVspMode);
+extern void BT_RESET_MODULE(void);
+extern void BT_Receive_Data_To_BOS(void);
+extern Module_Status BT_Receive_Data(uint8_t* buffer,uint8_t size);
+extern void BT_Disconnect(void);
+extern void BT_Delete_Script(void);
+extern void BT_Download_Script(void);
+extern Module_Status BT_Scan(void);
+extern Module_Status BT_Connect(uint8_t BT_Device);
+extern Module_Status BT_Clear_User_Buffer(void);
+extern Module_Status BT_Send_Data(uint8_t* BT_Data, uint8_t length);
+extern Module_Status BT_Send_Message(uint8_t dst,uint16_t code,uint16_t numberOfParams);
+/*BT_Send_Message() function is the same as SendMessageToModule(),
+but it insures that BT900 is connected to Bluetooth device before sending any Message*/
+extern Module_Status BT_Set_Discoverable(void);
+extern Module_Status BT_Set_Name(uint8_t* name, uint8_t length);
+extern Module_Status BT_Stream_To_Port(uint8_t port_number);
 
-extern HAL_StatusTypeDef btSendCommandToBtc(const uint8_t *command);
 
 
 /* -----------------------------------------------------------------------
@@ -217,10 +302,18 @@ extern HAL_StatusTypeDef btSendCommandToBtc(const uint8_t *command);
    -----------------------------------------------------------------------
 */
 
-extern const CLI_Command_Definition_t btUpdateScriptCommandDefinition;
-extern const CLI_Command_Definition_t btRunScriptCommandDefinition;
-extern const CLI_Command_Definition_t btVspModeCommandDefinition;
-extern const CLI_Command_Definition_t btSetBaudrateCommandDefinition;
+extern const CLI_Command_Definition_t btClearUserBufferCommandDefinition;
+extern const CLI_Command_Definition_t btSendDataCommandDefinition;
+extern const CLI_Command_Definition_t btDisconnectCommandDefinition;
+extern const CLI_Command_Definition_t btDeleteScriptCommandDefinition;
+extern const CLI_Command_Definition_t btDownloadScriptCommandDefinition;
+extern const CLI_Command_Definition_t btConnectCommandDefinition;
+extern const CLI_Command_Definition_t btScanCommandDefinition;
+extern const CLI_Command_Definition_t btSetNameCommandDefinition;
+extern const CLI_Command_Definition_t btSetDiscoverableCommandDefinition;
+extern const CLI_Command_Definition_t btStreamToPortCommandDefinition;
+
+
 
 
 #endif /* H23Rx_H */

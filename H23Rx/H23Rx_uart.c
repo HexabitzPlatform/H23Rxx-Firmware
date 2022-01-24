@@ -1,5 +1,5 @@
 /*
- BitzOS (BOS) V0.2.6 - Copyright (C) 2017-2022 Hexabitz
+ BitzOS (BOS) V0.2.5 - Copyright (C) 2017-2021 Hexabitz
  All rights reserved
 
  File Name     : H23Rx_uart.c
@@ -9,6 +9,8 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "BOS.h"
+uint8_t Bluetooth_Buffer[MSG_RX_BUF_SIZE];
+
 
 
 FlagStatus UartRxReady = RESET;
@@ -87,6 +89,7 @@ void MX_USART3_UART_Init(void)
 		huart3.AdvancedInit.Swap = UART_ADVFEATURE_SWAP_ENABLE;
 	  HAL_UART_Init(&huart3);
 	#endif
+
 }
 #endif
 
@@ -500,5 +503,8 @@ void SwapUartPins(UART_HandleTypeDef *huart, uint8_t direction)
 		}
 	}
 }
+
+
+
 
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

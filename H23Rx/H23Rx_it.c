@@ -1,5 +1,5 @@
 /*
- BitzOS (BOS) V0.2.6 - Copyright (C) 2017-2022 Hexabitz
+ BitzOS (BOS) V0.2.5 - Copyright (C) 2017-2021 Hexabitz
  All rights reserved
 
  File Name     : H23R0_it.c
@@ -11,10 +11,10 @@
 /* Includes ------------------------------------------------------------------*/
 #include "BOS.h"
 
+uint8_t cnt_0x09 = 0; // '\t' character code
 
 /* External variables --------------------------------------------------------*/
 extern uint8_t UARTRxBuf[NumOfPorts][MSG_RX_BUF_SIZE];
-//extern uint8_t UARTTxBuf[3][MSG_TX_BUF_SIZE];
 extern uint8_t UARTRxBufIndex[NumOfPorts];
 
 /* External function prototypes ----------------------------------------------*/
@@ -212,17 +212,71 @@ void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart)
 
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 {
-	// Check only ports in messaging mode
-	if (portStatus[GetPort(huart)] == FREE || portStatus[GetPort(huart)] == MSG)
+	if(huart == &huart3)
 	{
-		// Circular buffer is full. Set a global persistant flag via BOS events and a temporary flag via portStatus.
-		BOSMessaging.overrun = GetPort(huart);
-		portStatus[GetPort(huart)] = OVERRUN;
-		// Reset the circular RX buffer index
-		UARTRxBufIndex[GetPort(huart)-1] = 0;
-		// Set a port-specific flag here and let the backend task restart DMA
-		MsgDMAStopped[GetPort(huart)-1] = true;	
+		if(BT_Rx == 9) cnt_0x09++; //'\t' character code
+		else if(BT_Rx=='Y' && cnt_0x09 == 3) // Pairing...
+			{
+			writePxMutex(PORT_BTC_CONN,(char*) "y\r",2,cmd50ms, HAL_MAX_DELAY);
+			cnt_0x09=0;
+			}
+		else if(BT_Rx=='C' && cnt_0x09 == 3) //Connected
+		{
+			BT_Connection_flag = 1;
+			BT_SPP_Mode = 1; //SPP_Bridge_Mode
+			cnt_0x09 = 0;
+		}
+		else if(BT_Rx=='D' && cnt_0x09 == 3) //Disconnected
+		{
+			BT_Connection_flag =0 ;
+			BT_SPP_Mode = 0; //SPP_Command_Mode
+			cnt_0x09 = 0;
+		}
+		else cnt_0x09=0;
+
+		if(BT_Connection_flag == 0 || BT_SPP_Mode == 0 /*SPP_Command_Mode*/) //Disconnected
+		{
+			BT_Commands_Buffer[BT_Commands_Buffer_Index] = BT_Rx;
+			BT_Commands_Buffer_Index++;
+			if(BT_Commands_Buffer_Index == BT_Command_Buffer_Length) BT_Commands_Buffer_Index=0;
+
+		}
+		else if(BT_To_User_Buffer_flag == 1)
+		{
+			*BT_User_Buffer_ptr = BT_Rx;
+			(*BT_User_Buffer_Index_ptr)++ ;
+			if( *BT_User_Buffer_Index_ptr >= BT_User_Buffer_Length )
+			{
+				*BT_User_Buffer_Index_ptr = 0;
+				BT_User_Buffer_ptr = BT_User_Buffer_beginning_ptr;
+			}
+			else
+			{
+				BT_User_Buffer_ptr++;
+			}
+
+		}
+		else
+		{
+			UARTRxBuf[5][BT_BOS_Index] = BT_Rx;
+			BT_BOS_Index++;
+			if(BT_BOS_Index == MSG_RX_BUF_SIZE) BT_BOS_Index = 0;
+		}
+
+		HAL_UART_Receive_DMA(huart, (uint8_t *)&BT_Rx, 1);
 	}
+		// Check only ports in messaging mode
+		if (portStatus[GetPort(huart)] == FREE || portStatus[GetPort(huart)] == MSG)
+		{
+			// Circular buffer is full. Set a global persistant flag via BOS events and a temporary flag via portStatus.
+			BOSMessaging.overrun = GetPort(huart);
+			portStatus[GetPort(huart)] = OVERRUN;
+			// Reset the circular RX buffer index
+			UARTRxBufIndex[GetPort(huart)-1] = 0;
+			// Set a port-specific flag here and let the backend task restart DMA
+			MsgDMAStopped[GetPort(huart)-1] = true;
+		}
+
 }
 
 /*-----------------------------------------------------------*/

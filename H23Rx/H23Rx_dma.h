@@ -1,5 +1,5 @@
 /*
- BitzOS (BOS) V0.2.6 - Copyright (C) 2017-2022 Hexabitz
+ BitzOS (BOS) V0.2.5 - Copyright (C) 2017-2021 Hexabitz
  All rights reserved
 
  File Name     : H23R0_dma.h
@@ -17,7 +17,7 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "stm32f0xx_hal.h"
-	 
+
 	 
 /* Check which DMA interrupt occured */	 
 #define HAL_DMA_GET_IT_SOURCE(__HANDLE__, __INTERRUPT__)  ((((__HANDLE__)->ISR & (__INTERRUPT__)) == (__INTERRUPT__)) ? SET : RESET)

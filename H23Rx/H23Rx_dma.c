@@ -1,5 +1,5 @@
 /*
- BitzOS (BOS) V0.2.6 - Copyright (C) 2017-2022 Hexabitz
+ BitzOS (BOS) V0.2.5 - Copyright (C) 2017-2021 Hexabitz
  All rights reserved
 
  File Name     : H23R0_dma.c
@@ -8,7 +8,6 @@
  */
 /* Includes ------------------------------------------------------------------*/
 #include "BOS.h"
-
 
 
 /*----------------------------------------------------------------------------*/
@@ -63,9 +62,9 @@ void DMA_Init(void)
 #ifdef _P5		
 	DMA_MSG_RX_CH_Init(&msgRxDMA[4], DMA2_Channel2);
 #endif
-#ifdef _P6		
+#ifdef _P6
 	DMA_MSG_RX_CH_Init(&msgRxDMA[5], DMA2_Channel3);
-#endif	
+#endif
 
 	/* Initialize messaging TX DMAs x 3 */
 	DMA_MSG_TX_CH_Init(&msgTxDMA[0], DMA1_Channel2);
@@ -182,10 +181,10 @@ void SetupMessagingRxDMAs(void)
 	if (portStatus[P5] == FREE)
 		DMA_MSG_RX_Setup(P5uart, &msgRxDMA[4]);
 #endif
-#ifdef _P6		
+#ifdef _P6
 	if (portStatus[P6] == FREE)
 		DMA_MSG_RX_Setup(P6uart, &msgRxDMA[5]);
-#endif				
+#endif
 }
 
 /*-----------------------------------------------------------*/
@@ -200,8 +199,16 @@ void DMA_MSG_RX_Setup(UART_HandleTypeDef *huart, DMA_HandleTypeDef *hDMA)
 	/* Setup DMA interrupts */
 	SetupDMAInterrupts(hDMA, MSG_DMA_INT_PRIORITY);
 	
-	/* Start DMA stream	*/	
-	HAL_UART_Receive_DMA(huart, (uint8_t *)&UARTRxBuf[GetPort(huart)-1], MSG_RX_BUF_SIZE);			
+	/* Start DMA stream	*/
+	if(huart != &huart3)
+	HAL_UART_Receive_DMA(huart, (uint8_t *)&UARTRxBuf[GetPort(huart)-1], MSG_RX_BUF_SIZE);
+
+	else
+	HAL_UART_Receive_DMA(huart, (uint8_t *)&BT_Rx, 1);
+
+
+
+
 }
 
 /*-----------------------------------------------------------*/
