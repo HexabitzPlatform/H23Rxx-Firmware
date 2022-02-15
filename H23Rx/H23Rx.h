@@ -17,7 +17,8 @@
 #include "H23Rx_uart.h"
 #include "H23Rx_gpio.h"
 #include "H23Rx_dma.h"
-
+#include "H23Rx_inputs.h"
+#include "H23Rx_eeprom.h"
 
 /* H23R0_Status Type Definition */
 typedef enum
@@ -294,7 +295,8 @@ but it insures that BT900 is connected to Bluetooth device before sending any Me
 extern Module_Status BT_Set_Discoverable(void);
 extern Module_Status BT_Set_Name(uint8_t* name, uint8_t length);
 extern Module_Status BT_Stream_To_Port(uint8_t port_number);
-
+void SetupPortForRemoteBootloaderUpdate(uint8_t port);
+void remoteBootloaderUpdate(uint8_t src,uint8_t dst,uint8_t inport,uint8_t outport);
 
 
 /* -----------------------------------------------------------------------
