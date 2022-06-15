@@ -12,6 +12,9 @@
 #include "BOS.h"
 uint8_t* error_restart_message = "Restarting...\r\n";
 
+uint8_t temp_length[NumOfPorts] = {0};
+uint8_t temp_index[NumOfPorts] = {0};
+
 uint8_t cnt_0x09 = 0; // '\t' character code
 
 /* External variables --------------------------------------------------------*/
@@ -20,7 +23,7 @@ extern uint8_t UARTRxBufIndex[NumOfPorts];
 
 /* External function prototypes ----------------------------------------------*/
 
-
+extern TaskHandle_t xCommandConsoleTaskHandle; // CLI Task handler.
 
 
 /******************************************************************************/
@@ -215,74 +218,75 @@ void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart)
 
 /*-----------------------------------------------------------*/
 
-void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
-{
-	if(huart == &huart3)
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart){
+	uint8_t port_number = GetPort(huart);
+	uint8_t port_index = port_number - 1;
+	if(Rx_Data[port_index] == 0x0D && portStatus[port_number] == FREE)
 	{
-		if(BT_Rx == 9) cnt_0x09++; //'\t' character code
-		else if(BT_Rx=='Y' && cnt_0x09 == 3) // Pairing...
-			{
-			writePxMutex(PORT_BTC_CONN,(char*) "y\r",2,cmd50ms, HAL_MAX_DELAY);
-			cnt_0x09=0;
-			}
-		else if(BT_Rx=='C' && cnt_0x09 == 3) //Connected
-		{
-			BT_Connection_flag = 1;
-			BT_SPP_Mode = 1; //SPP_Bridge_Mode
-			cnt_0x09 = 0;
-		}
-		else if(BT_Rx=='D' && cnt_0x09 == 3) //Disconnected
-		{
-			BT_Connection_flag =0 ;
-			BT_SPP_Mode = 0; //SPP_Command_Mode
-			cnt_0x09 = 0;
-		}
-		else cnt_0x09=0;
+		for(int i=0;i<=NumOfPorts;i++) portStatus[i] = FREE; // Free all ports
+		portStatus[port_number] =CLI; // Continue the CLI session on this port
+		PcPort = port_number;
+		xTaskNotifyGive(xCommandConsoleTaskHandle);
 
-		if(BT_Connection_flag == 0 || BT_SPP_Mode == 0 /*SPP_Command_Mode*/) //Disconnected
-		{
-			BT_Commands_Buffer[BT_Commands_Buffer_Index] = BT_Rx;
-			BT_Commands_Buffer_Index++;
-			if(BT_Commands_Buffer_Index == BT_Command_Buffer_Length) BT_Commands_Buffer_Index=0;
+		if(Activate_CLI_For_First_Time_Flag == 1) Read_In_CLI_Task_Flag = 1;
+		Activate_CLI_For_First_Time_Flag = 1;
 
-		}
-		else if(BT_To_User_Buffer_flag == 1)
-		{
-			*BT_User_Buffer_ptr = BT_Rx;
-			(*BT_User_Buffer_Index_ptr)++ ;
-			if( *BT_User_Buffer_Index_ptr >= BT_User_Buffer_Length )
-			{
-				*BT_User_Buffer_Index_ptr = 0;
-				BT_User_Buffer_ptr = BT_User_Buffer_beginning_ptr;
-			}
-			else
-			{
-				BT_User_Buffer_ptr++;
-			}
+	}
+	else if(portStatus[port_number] == CLI)
+	{
+		Read_In_CLI_Task_Flag = 1;
+	}
 
+	else if(Rx_Data[port_index] == 'H' && portStatus[port_number] == FREE)
+	{
+		portStatus[port_number] =H_Status; // H  Character was received, waiting for Z character.
+	}
+
+	else if(Rx_Data[port_index] == 'Z' && portStatus[port_number] == H_Status)
+	{
+		portStatus[port_number] =Z_Status; // Z  Character was received, waiting for length byte.
+	}
+
+	else if(Rx_Data[port_index] != 'Z' && portStatus[port_number] == H_Status)
+	{
+		portStatus[port_number] =FREE; // Z  Character was not received, so there is no message to receive.
+	}
+
+	else if(portStatus[port_number] == Z_Status)
+	{
+		portStatus[port_number] =MSG; // Receive length byte.
+		MSG_Buffer[port_index][MSG_Buffer_Index_End[port_index]][2] = Rx_Data[port_index];
+		temp_index[port_index] = 3;
+		temp_length[port_index] = Rx_Data[port_index] + 1;
+	}
+
+	else if(portStatus[port_number] == MSG)
+	{
+		if(temp_length[port_index] > 1)
+		{
+			MSG_Buffer[port_index][MSG_Buffer_Index_End[port_index]][temp_index[port_index]] = Rx_Data[port_index];
+			temp_index[port_index]++;
+			temp_length[port_index]--;
 		}
 		else
 		{
-			UARTRxBuf[5][BT_BOS_Index] = BT_Rx;
-			BT_BOS_Index++;
-			if(BT_BOS_Index == MSG_RX_BUF_SIZE) BT_BOS_Index = 0;
-		}
+			MSG_Buffer[port_index][MSG_Buffer_Index_End[port_index]][temp_index[port_index]] = Rx_Data[port_index];
+			temp_index[port_index]++;
+			temp_length[port_index]--;
+			MSG_Buffer_Index_End[port_index]++;
+			if(MSG_Buffer_Index_End[port_index] == MSG_COUNT) MSG_Buffer_Index_End[port_index] = 0;
 
-		HAL_UART_Receive_DMA(huart, (uint8_t *)&BT_Rx, 1);
+
+			Process_Message_Buffer[Process_Message_Buffer_Index_End] = port_number;
+			Process_Message_Buffer_Index_End++;
+			if(Process_Message_Buffer_Index_End == MSG_COUNT) Process_Message_Buffer_Index_End = 0;
+			portStatus[port_number] =FREE; // End of receiving message.
+		}
 	}
-		// Check only ports in messaging mode
-		if (portStatus[GetPort(huart)] == FREE || portStatus[GetPort(huart)] == MSG)
-		{
-			// Circular buffer is full. Set a global persistant flag via BOS events and a temporary flag via portStatus.
-			BOSMessaging.overrun = GetPort(huart);
-			portStatus[GetPort(huart)] = OVERRUN;
-			// Reset the circular RX buffer index
-			UARTRxBufIndex[GetPort(huart)-1] = 0;
-			// Set a port-specific flag here and let the backend task restart DMA
-			MsgDMAStopped[GetPort(huart)-1] = true;
-		}
 
+		HAL_UART_Receive_DMA(huart,(uint8_t* )&Rx_Data[GetPort(huart) - 1] , 1);
 }
+
 
 /*-----------------------------------------------------------*/
 
