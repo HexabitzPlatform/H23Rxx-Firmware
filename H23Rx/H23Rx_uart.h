@@ -1,5 +1,5 @@
 /*
- BitzOS (BOS) V0.2.5 - Copyright (C) 2017-2021 Hexabitz
+ BitzOS (BOS) V0.2.7 - Copyright (C) 2017-2021 Hexabitz
  All rights reserved
 
  File Name     : H23Rx_uart.h
@@ -20,6 +20,7 @@
 extern FlagStatus UartRxReady;
 extern FlagStatus UartTxReady;
 extern uint8_t PcPort;
+
 
 #ifndef __N
 	extern uint16_t arrayPortsDir[MaxNumOfModules];									/* Array ports directions */
@@ -43,7 +44,7 @@ extern HAL_StatusTypeDef writePxMutex(uint8_t port, char *buffer, uint16_t n, ui
 extern HAL_StatusTypeDef readPxITMutex(uint8_t port, char *buffer, uint16_t n, uint32_t mutexTimeout);
 extern HAL_StatusTypeDef writePxITMutex(uint8_t port, char *buffer, uint16_t n, uint32_t mutexTimeout);
 extern HAL_StatusTypeDef writePxDMAMutex(uint8_t port, char *buffer, uint16_t n, uint32_t mutexTimeout);
-
+extern BOS_Status ReadPortsDirMSG(uint8_t SourceModule);
 
 #ifdef __cplusplus
 }

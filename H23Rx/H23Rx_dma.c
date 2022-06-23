@@ -1,5 +1,5 @@
 /*
- BitzOS (BOS) V0.2.5 - Copyright (C) 2017-2021 Hexabitz
+ BitzOS (BOS) V0.2.7 - Copyright (C) 2017-2021 Hexabitz
  All rights reserved
 
  File Name     : H23R0_dma.c
@@ -8,7 +8,6 @@
  */
 /* Includes ------------------------------------------------------------------*/
 #include "BOS.h"
-
 
 
 /*----------------------------------------------------------------------------*/
@@ -63,9 +62,9 @@ void DMA_Init(void)
 #ifdef _P5		
 	DMA_MSG_RX_CH_Init(&msgRxDMA[4], DMA2_Channel2);
 #endif
-#ifdef _P6		
+#ifdef _P6
 	DMA_MSG_RX_CH_Init(&msgRxDMA[5], DMA2_Channel3);
-#endif	
+#endif
 
 	/* Initialize messaging TX DMAs x 3 */
 	DMA_MSG_TX_CH_Init(&msgTxDMA[0], DMA1_Channel2);
@@ -182,10 +181,10 @@ void SetupMessagingRxDMAs(void)
 	if (portStatus[P5] == FREE)
 		DMA_MSG_RX_Setup(P5uart, &msgRxDMA[4]);
 #endif
-#ifdef _P6		
+#ifdef _P6
 	if (portStatus[P6] == FREE)
 		DMA_MSG_RX_Setup(P6uart, &msgRxDMA[5]);
-#endif				
+#endif
 }
 
 /*-----------------------------------------------------------*/
@@ -200,8 +199,16 @@ void DMA_MSG_RX_Setup(UART_HandleTypeDef *huart, DMA_HandleTypeDef *hDMA)
 	/* Setup DMA interrupts */
 	SetupDMAInterrupts(hDMA, MSG_DMA_INT_PRIORITY);
 	
-	/* Start DMA stream	*/	
-	HAL_UART_Receive_DMA(huart, (uint8_t *)&UARTRxBuf[GetPort(huart)-1], MSG_RX_BUF_SIZE);			
+	/* Start DMA stream	*/
+	/* if(huart != &huart3)
+	HAL_UART_Receive_DMA(huart, (uint8_t *)&UARTRxBuf[GetPort(huart)-1], MSG_RX_BUF_SIZE);
+
+	else
+	HAL_UART_Receive_DMA(huart, (uint8_t *)&BT_Rx, 1); */
+	HAL_UART_Receive_DMA(huart,(uint8_t* )&Rx_Data[GetPort(huart) - 1] , 1);	
+
+
+
 }
 
 /*-----------------------------------------------------------*/
@@ -271,6 +278,70 @@ void DMA_STREAM_Setup(UART_HandleTypeDef* huartSrc, UART_HandleTypeDef* huartDst
 /*-----------------------------------------------------------*/
 /* Private functions ----------------------------------------*/
 /*-----------------------------------------------------------*/
+
+/* --- Stop a streaming DMA ---
+ */
+void StopStreamDMA(uint8_t port) {
+	DMA_HandleTypeDef *hDMA;
+
+	/* Select DMA struct */
+	hDMA = &streamDMA[port - 1];
+
+	HAL_DMA_Abort(hDMA);
+	hDMA->Instance->CNDTR = 0;
+	dmaStreamCount[port - 1] = 0;
+	dmaStreamTotal[port - 1] = 0;
+
+}
+
+
+/* --- Stop a messaging DMA ---
+ */
+void StopMsgDMA(uint8_t port){
+	DMA_HandleTypeDef *hDMA;
+
+	/* Select DMA struct */
+	hDMA =&msgRxDMA[port - 1];
+
+	HAL_DMA_Abort(hDMA);
+	hDMA->Instance->CNDTR =0;
+}
+
+
+/*-----------------------------------------------------------*/
+
+/* Switch messaging DMA channels to streaming
+ */
+void SwitchMsgDMAToStream(uint8_t port) {
+	// TODO - Make sure all messages in the RX buffer have been parsed?
+
+	// Stop the messaging DMA
+	StopMsgDMA(port);
+
+	// Initialize a streaming DMA using same channel
+	DMA_STREAM_CH_Init(&streamDMA[port - 1], msgRxDMA[port - 1].Instance);
+}
+
+/*-----------------------------------------------------------*/
+
+/* Switch streaming DMA channel to messaging
+ */
+void SwitchStreamDMAToMsg(uint8_t port) {
+	// Stop the streaming DMA
+	StopStreamDMA(port);
+
+	// Initialize a messaging DMA using same channels
+	DMA_MSG_RX_CH_Init(&msgRxDMA[port - 1], streamDMA[port - 1].Instance);
+
+	// Remove stream DMA and change port status
+	portStatus[GetPort(streamDMA[port - 1].Parent)] = FREE;
+	streamDMA[port - 1].Instance = 0;
+	dmaStreamDst[port - 1] = 0;
+
+	// Read this port again in messaging mode
+	DMA_MSG_RX_Setup(GetUart(port), &msgRxDMA[port - 1]);
+
+}
 
 /* Setup DMA interrupts  
 */
@@ -602,23 +673,52 @@ void HAL_CRC_MspDeInit(CRC_HandleTypeDef* hcrc)
 /*
  * calculate CRC8 byte for a data buffer
  */
-uint8_t  CalculateCRC8(uint32_t pBuffer[], uint16_t size)
+
+uint8_t  CalculateCRC8(uint8_t pBuffer[], uint16_t size)
 {
-	uint8_t pTemp;
-	//uint32_t crcBuffer[size]=*pData;
-	/* check if the passed variables are null */
-	if (NULL!=pBuffer && 0!=size)
+  uint8_t pTemp;
+  uint8_t temp_index;
+  uint8_t temp_buffer[4] = {0};
+
+  /* check if the passed variables are null */
+  if (NULL!=pBuffer && 0!=size)
+  {
+	if(size < 4)
 	{
-		pTemp=HAL_CRC_Calculate(&hcrc, pBuffer, size/4);
+		temp_index = 0;
+		for(int i=0; i<4; i++)
+		{
+			temp_buffer[i] = pBuffer[temp_index++];
+			if(--size == 0) break;
+		}
+		pTemp=HAL_CRC_Calculate(&hcrc, (uint32_t*)temp_buffer, 1);
+
+	}
+
+	else
+	{
+		pTemp=HAL_CRC_Calculate(&hcrc, (uint32_t*)pBuffer, size/4);
 		if ((size%4)!=0)
 		{
-			pTemp=HAL_CRC_Accumulate(&hcrc, &pBuffer[(size/4)*4], 1);
+			temp_index = size - (size%4);
+			size %= 4;
+			for(int i=0; i<4; i++)
+			{
+				temp_buffer[i] = pBuffer[temp_index++];
+				if(--size == 0) break;
+			}
+		  	pTemp=HAL_CRC_Accumulate(&hcrc, (uint32_t*)temp_buffer, 1);
+
 		}
-		return pTemp;
 	}
-	else
+
+	return pTemp;
+  }
+  
+else
 	return 0;
 }
+
 /*-----------------------------------------------------------*/
 
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
